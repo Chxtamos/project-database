@@ -35,6 +35,68 @@ Docker คือโปรแกรมที่จะรัน PostgreSQL databas
 
 > ⚠️ ถ้าใช้ Windows ต้องเปิด **WSL2** ด้วย — Docker Desktop จะแนะนำให้ติดตั้งอัตโนมัติ
 
+---
+
+## 🐳 วิธีสร้างและลง Database ใน Docker Desktop
+
+### ขั้นตอนที่ 1 — สร้าง Container ครั้งแรก (พิมพ์คำสั่งแค่ครั้งเดียว)
+
+เปิด Terminal แล้วไปที่ folder โปรเจกต์ (ที่มีไฟล์ `docker-compose.yml`):
+
+```powershell
+cd project-database
+docker-compose -p movie_admin up -d
+```
+
+**สิ่งที่คำสั่งนี้ทำ:**
+- ✅ สร้าง PostgreSQL container ชื่อ `movie_admin_db`
+- ✅ สร้าง database ชื่อ `movie_admin_db` ให้อัตโนมัติ
+- ✅ รันในพื้นหลัง (Terminal ไม่ค้าง)
+
+> ครั้งแรกจะดาวน์โหลด PostgreSQL image (~105 MB) รอสักครู่
+
+---
+
+### ขั้นตอนที่ 2 — Import โครงสร้าง Database (ทำแค่ครั้งแรกครั้งเดียว)
+
+หลัง container รันแล้ว ต้อง import ไฟล์ `init_db.sql` เข้าไปด้วย:
+
+```powershell
+# Windows (PowerShell) — รันจาก folder project-database
+Get-Content "init_db.sql" | docker exec -i movie_admin_db psql -U postgres -d movie_admin_db
+```
+
+เมื่อเสร็จจะเห็น output เยอะๆ เช่น `CREATE TABLE`, `ALTER TABLE`, `COPY 10` — แปลว่าสำเร็จ ✅
+
+---
+
+### ขั้นตอนที่ 3 — เช็คใน Docker Desktop
+
+เปิด **Docker Desktop** จะเห็น:
+
+```
+Containers
+└── 🟢 movie_admin          ← project ที่เราสร้าง
+      └── movie_admin_db    ← container PostgreSQL กำลังรันอยู่
+            port: 5433
+```
+
+---
+
+### ครั้งต่อไป — กด Start/Stop ผ่าน Docker Desktop ได้เลย
+
+หลังสร้าง container แล้วครั้งแรก **ไม่ต้องพิมพ์คำสั่งอีก** แค่:
+
+| ต้องการ | วิธี |
+|---------|------|
+| **เริ่ม** database | เปิด Docker Desktop → Containers → กด ▶ **Start** ที่ `movie_admin` |
+| **หยุด** database | เปิด Docker Desktop → Containers → กด ⏹ **Stop** |
+| ดู Logs | คลิกที่ container → แท็บ **Logs** |
+
+> หรือจะใช้คำสั่ง `docker-compose -p movie_admin up -d` / `down` ก็ได้เช่นกัน
+
+---
+
 ### 3. Git
 - ดาวน์โหลดที่ https://git-scm.com/
 - ติดตั้งตามขั้นตอนปกติ
