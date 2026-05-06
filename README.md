@@ -1,90 +1,241 @@
-# 🎬 MovieAdmin - High-Fidelity Streaming Admin Panel
+# 🎬 MovieAdmin — Streaming Admin Panel
 
-MovieAdmin is an enterprise-grade administration dashboard designed for managing a movie streaming platform. This project is a pixel-perfect implementation of a Figma design, focusing on 1:1 visual fidelity, high-performance UX, and a scalable component architecture.
+> **สำหรับคนที่จะทำงานต่อ**: อ่าน README นี้ให้ครบก่อนเริ่มครับ
 
-## 🚀 Tech Stack
+---
 
-- **Framework**: [React 18](https://react.dev/)
-- **Build Tool**: [Vite](https://vitejs.dev/) (Ultra-fast HMR)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/) (Utility-first CSS)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Routing**: [React Router DOM v6](https://reactrouter.com/)
-- **Design Source**: Figma (Implemented with 1:1 Visual Parity)
+## 📦 Tech Stack
 
-## ✨ Key Features
+| ส่วน | เทคโนโลยี |
+|------|-----------|
+| Frontend | React 18 + Vite + Tailwind CSS |
+| Backend | Node.js + Express.js |
+| Database | PostgreSQL 16 (รันผ่าน Docker) |
+| Auth | JWT (jsonwebtoken) + bcryptjs |
 
-### 1. Enterprise-Grade UI/UX
-- **Pixel-Perfect Implementation**: All margins, paddings, colors, and typography are mapped directly from Figma specs.
-- **Adaptive Layout**: A responsive sidebar-based layout with a consistent header across all management views.
-- **Bento Grid Dashboard**: High-impact visual summary featuring statistical cards and a "Top Movies" ranking system.
+---
 
-### 2. Interactive Flow (Figma Prototype Fidelity)
-- **Dynamic Routing**: Seamless navigation between Dashboard, Movie Management, Payments, Reviews, User Overview, and System Reports.
-- **Advanced Modal System**: 
-  - **Add/Edit Modals**: Context-aware forms for data entry and modification.
-  - **Confirmation Modals**: Safety-first deletion flow with visual warnings.
-- **Action Menus**: Floating "More" menus on table rows for quick access to Edit/Delete actions.
-- **Image Upload System**: Interactive drag-and-drop style upload zone with real-time image preview and change capabilities.
+## 🛠️ สิ่งที่ต้องติดตั้งก่อน
 
-### 3. Scalable Architecture
-- **Reusable Components**: 
-  - `Layout.jsx`: Standardizes the shell of the application.
-  - `Modal.jsx`: A generic wrapper for all overlay content.
-  - `ConfirmModal.jsx`: Specialized component for critical destructive actions.
+### 1. Node.js
+- ดาวน์โหลดที่ https://nodejs.org/
+- เลือก **LTS version** (v18 ขึ้นไป)
+- ติดตั้งตามขั้นตอนปกติ
+- ตรวจสอบ: `node -v` ต้องแสดงเวอร์ชัน
 
-## 📂 Project Structure
+### 2. Docker Desktop ⚠️ สำคัญมาก
+Docker คือโปรแกรมที่จะรัน PostgreSQL database บนเครื่องคุณ **โดยไม่ต้องติดตั้ง PostgreSQL เอง**
 
-```text
-figma-ui/
-├── src/
-│   ├── components/       # Reusable UI building blocks
-│   │   ├── Layout.jsx    # Main application shell (Sidebar + Header)
-│   │   ├── Modal.jsx     # Generic overlay container
-│   │   └── ConfirmModal.jsx # Safety-first confirmation dialogs
-│   ├── pages/            # Feature-specific views
-│   │   ├── LoginPage.jsx # Entry point & authentication UI
-│   │   ├── Dashboard.jsx # Main analytics overview
-│   │   ├── ManageMovies.jsx # Movie library management (with Image Upload)
-│   │   ├── ManagePayments.jsx # Billing & transaction history
-│   │   ├── ManageReviews.jsx # User feedback & ratings
-│   │   ├── ManageUsers.jsx   # User account administration
-│   │   └── SystemReport.jsx  # System health & technical metrics
-│   ├── App.jsx           # Main routing configuration
-│   ├── main.jsx          # Application entry point
-│   └── index.css         # Global styles & Tailwind directives
-├── index.html            # HTML entry point
-├── tailwind.config.js    # Design tokens (Colors, Fonts)
-└── package.json          # Dependencies & scripts
+**วิธีติดตั้ง Docker Desktop:**
+1. ไปที่ https://www.docker.com/products/docker-desktop/
+2. กด **Download for Windows** (หรือ Mac)
+3. ติดตั้งและ **Restart** เครื่อง
+4. เปิด Docker Desktop และรอจนไอคอน Docker ใน Taskbar เป็นสีขาว (แปลว่า Ready)
+5. ตรวจสอบ: เปิด Terminal แล้วพิมพ์ `docker --version`
+
+> ⚠️ ถ้าใช้ Windows ต้องเปิด **WSL2** ด้วย — Docker Desktop จะแนะนำให้ติดตั้งอัตโนมัติ
+
+### 3. Git
+- ดาวน์โหลดที่ https://git-scm.com/
+- ติดตั้งตามขั้นตอนปกติ
+
+---
+
+## 🚀 วิธีเริ่มต้น (ทำครั้งแรกครั้งเดียว)
+
+### ขั้นตอนที่ 1 — Clone โปรเจกต์
+```bash
+git clone -b Beta1 https://github.com/Chxtamos/project-database.git
+cd project-database
 ```
 
-## 🛠️ Getting Started
+### ขั้นตอนที่ 2 — ติดตั้ง Frontend dependencies
+```bash
+npm install
+```
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) (v18+ recommended)
-- npm (comes with Node.js)
+### ขั้นตอนที่ 3 — ติดตั้ง Backend dependencies
+```bash
+cd backend
+npm install
+cd ..
+```
 
-### Installation & Execution
-1. **Clone or download** the project folder.
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-3. **Run in development mode**:
-   ```bash
-   npm run dev
-   ```
-4. **Access the app**: Open `http://localhost:5173` in your browser.
+### ขั้นตอนที่ 4 — สร้างไฟล์ .env สำหรับ Backend
+```bash
+# Windows (PowerShell)
+copy backend\.env.example backend\.env
 
-## 🎨 Design Tokens
-The project uses a custom color palette defined in `tailwind.config.js` to ensure consistency:
-- `figma-dark`: `#181c1d` (Primary Text/Headers)
-- `figma-blue`: `#0058be` (Primary Action/Brand)
-- `figma-bg`: `#f5f6f7` (Main Application Background)
+# Mac / Linux
+cp backend/.env.example backend/.env
+```
+> ✅ ไม่ต้องแก้ไขอะไรในไฟล์ .env — ค่าเริ่มต้นตรงกับ Docker แล้ว
 
-## 🗺️ Future Roadmap
-- [ ] Integrate with a real Backend API for CRUD operations.
-- [ ] Implement State Management (e.g., Zustand or Redux) for global data.
-- [ ] Add full Form Validation using React Hook Form & Zod.
-- [ ] Implement Role-Based Access Control (RBAC) for different admin levels.
+---
 
+## ▶️ วิธีรันทุกครั้ง (เปิด Terminal 3 หน้าต่าง)
 
+### Terminal 1 — เริ่ม Docker Database
+```bash
+# ต้องอยู่ใน folder project-database
+docker-compose -p movie_admin up -d
+```
+
+**ครั้งแรก** Docker จะ download PostgreSQL image (~105 MB) รอสักครู่
+**ครั้งต่อไป** จะเริ่มทันที ไม่ต้อง download ใหม่
+
+ตรวจสอบว่าเริ่มสำเร็จ:
+```bash
+docker ps
+# ต้องเห็น movie_admin_db อยู่ใน list
+```
+
+### Terminal 2 — รัน Backend API
+```bash
+cd backend
+npm run dev
+```
+✅ สำเร็จเมื่อเห็น:
+```
+🚀 Movie Admin API → http://localhost:5000
+✅ Connected to PostgreSQL: movie_admin_db
+```
+
+### Terminal 3 — รัน Frontend
+```bash
+# อยู่ใน folder project-database (root)
+npm run dev
+```
+✅ เปิด browser ไปที่ **http://localhost:5173**
+
+---
+
+## 🛑 วิธีหยุดระบบ
+
+```bash
+# หยุด Docker (database)
+docker-compose -p movie_admin down
+
+# หยุด Backend และ Frontend: กด Ctrl+C ในแต่ละ Terminal
+```
+
+---
+
+## 🌐 Ports ที่ใช้งาน
+
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:5000 |
+| PostgreSQL | localhost:**5433** |
+
+> ⚠️ Database ใช้ port **5433** (ไม่ใช่ 5432 ปกติ) เพื่อไม่ชนกับ PostgreSQL ที่อาจติดตั้งบนเครื่อง
+
+---
+
+## 📁 โครงสร้างโปรเจกต์
+
+```
+project-database/
+├── src/                    ← Frontend (React)
+│   ├── components/         ← Reusable components
+│   │   ├── Layout.jsx
+│   │   ├── Modal.jsx
+│   │   └── ConfirmModal.jsx
+│   ├── pages/              ← หน้าต่างๆ
+│   │   ├── LoginPage.jsx
+│   │   ├── Dashboard.jsx
+│   │   ├── ManageMovies.jsx
+│   │   ├── ManagePayments.jsx
+│   │   ├── ManageReviews.jsx
+│   │   ├── ManageUsers.jsx
+│   │   └── SystemReport.jsx
+│   └── App.jsx             ← Routing
+│
+├── backend/                ← Backend (Express)
+│   ├── routes/             ← API Endpoints
+│   │   ├── auth.js         ← /api/auth/login, /register
+│   │   ├── movies.js       ← /api/movies (CRUD)
+│   │   ├── users.js        ← /api/users (CRUD)
+│   │   ├── payments.js     ← /api/payments (CRUD)
+│   │   ├── reviews.js      ← /api/reviews (CRUD)
+│   │   ├── genres.js       ← /api/genres (CRUD)
+│   │   ├── cart.js         ← /api/cart
+│   │   └── dashboard.js    ← /api/dashboard/stats
+│   ├── db/
+│   │   └── index.js        ← PostgreSQL connection
+│   ├── middleware/
+│   │   └── auth.js         ← JWT middleware
+│   ├── server.js           ← Entry point
+│   └── .env.example        ← ตัวอย่าง config
+│
+├── docker-compose.yml      ← Docker setup สำหรับ database
+├── init_db.sql             ← SQL schema + ข้อมูลตัวอย่าง
+└── README.md
+```
+
+---
+
+## 🔌 API Endpoints
+
+### Auth
+| Method | Endpoint | Body |
+|--------|----------|------|
+| POST | `/api/auth/login` | `{ email, password }` |
+| POST | `/api/auth/register` | `{ username, email, telephone, password }` |
+
+### Movies
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/movies` | ดึงทั้งหมด (รองรับ `?search=&genre_id=&page=&limit=`) |
+| GET | `/api/movies/:id` | ดึงตัวเดียว |
+| POST | `/api/movies` | เพิ่ม (ต้อง login) |
+| PUT | `/api/movies/:id` | แก้ไข (ต้อง login) |
+| DELETE | `/api/movies/:id` | ลบ (ต้อง login) |
+
+### Users, Payments, Reviews, Genres, Cart
+> pattern เดียวกัน — ดู `/api/health` สำหรับ list ครบทุก endpoint
+
+### Dashboard
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/dashboard/stats` | สถิติรวม |
+| GET | `/api/dashboard/top-movies` | Top movies |
+| GET | `/api/dashboard/revenue-trend` | รายได้รายเดือน |
+
+---
+
+## 🗄️ Database Schema
+
+Database มี **16 ตาราง** หลักคือ:
+
+| ตาราง | คำอธิบาย |
+|-------|---------|
+| `users` | ผู้ใช้งาน |
+| `movies` | ภาพยนตร์ |
+| `genre` | หมวดหมู่ |
+| `movie_genre` | ความสัมพันธ์ movie-genre |
+| `actor` / `movie_actor` | นักแสดง |
+| `author` / `movie_author` | ผู้กำกับ |
+| `cart` / `cart_movies` | ตะกร้าสินค้า |
+| `payment` | การชำระเงิน |
+| `review` / `report_review` | รีวิว / รายงาน |
+| `library` / `playlist` | ห้องสมุด / เพลย์ลิสต์ |
+
+---
+
+## 🐛 แก้ปัญหาเบื้องต้น
+
+| ปัญหา | วิธีแก้ |
+|-------|---------|
+| `EADDRINUSE port 5000` | รัน `npx kill-port 5000` แล้ว `npm run dev` ใหม่ |
+| `Cannot connect to Docker` | เปิด Docker Desktop แล้วรอจนพร้อม |
+| `Connected to PostgreSQL` ไม่ขึ้น | ตรวจว่า Docker รันอยู่ด้วย `docker ps` |
+| Frontend port 5173 ถูกใช้อยู่ | Vite จะเปลี่ยนเป็น 5174 อัตโนมัติ |
+
+---
+
+## 👥 ทีมงาน
+
+- UI Design: Branch `UIโหดมาก`
+- Backend + Docker: Branch `Beta1`

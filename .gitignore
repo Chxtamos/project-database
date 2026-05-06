@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Environment variables (ห้าม push ขึ้น Git เด็ดขาด!)
+.env
+
+# Build output
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Upload files (ไม่ push รูปที่ upload)
+backend/uploads/
+
+# Editor
+.vscode/
+.idea/
