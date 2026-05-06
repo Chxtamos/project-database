@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🎬 MovieAdmin - High-Fidelity Streaming Admin Panel
 
 MovieAdmin is an enterprise-grade administration dashboard designed for managing a movie streaming platform. This project is a pixel-perfect implementation of a Figma design, focusing on 1:1 visual fidelity, high-performance UX, and a scalable component architecture.
@@ -88,4 +87,4 @@ The project uses a custom color palette defined in `tailwind.config.js` to ensur
 - [ ] Add full Form Validation using React Hook Form & Zod.
 - [ ] Implement Role-Based Access Control (RBAC) for different admin levels.
 
->>>>>>> 12d5cd95d3ef976e80b8627d6892cd7685574665
+
