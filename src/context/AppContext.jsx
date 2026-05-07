@@ -126,7 +126,7 @@ export const AppProvider = ({ children }) => {
 
   return (
     <AppContext.Provider value={{ 
-      cart, cartMovies, setCartMovies, addToCart, removeFromCart, checkout, 
+      cart, cartMovies, setCartMovies, addToCart, removeFromCart, checkout, fetchCart,
       library, setLibrary, 
       playlists, setPlaylists, addToPlaylist, createPlaylist,
       reviews, setReviews, addReview, reportReview 

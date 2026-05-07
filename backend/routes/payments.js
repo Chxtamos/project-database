@@ -129,14 +129,53 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
   }
 
   try {
-    const result = await pool.query(
-      `UPDATE public.payment SET status = $1 WHERE payment_id = $2 RETURNING *`,
-      [parseInt(status), req.params.id]
-    );
-    if (result.rows.length === 0) {
+    const existing = await pool.query('SELECT * FROM public.payment WHERE payment_id = $1', [req.params.id]);
+    if (existing.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'ไม่พบรายการชำระเงิน' });
     }
-    res.json({ success: true, message: 'อัปเดตสถานะสำเร็จ', data: result.rows[0] });
+
+    const payment = existing.rows[0];
+    const newStatus = parseInt(status);
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Update payment status
+      const result = await client.query(
+        `UPDATE public.payment SET status = $1, completed_at = CASE WHEN $1 = 1 THEN NOW() ELSE completed_at END WHERE payment_id = $2 RETURNING *`,
+        [newStatus, req.params.id]
+      );
+
+      // If admin approves (status = 1): add movies to library and clear cart
+      if (newStatus === 1) {
+        const cartMovies = await client.query(
+          `SELECT movie_id FROM public.cart_movies WHERE cart_id = $1`,
+          [payment.cart_id]
+        );
+
+        for (const row of cartMovies.rows) {
+          await client.query(
+            `INSERT INTO public.library (user_id, movie_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+            [payment.user_id, row.movie_id]
+          );
+        }
+
+        // Clear cart after library is populated
+        await client.query(
+          `DELETE FROM public.cart_movies WHERE cart_id = $1`,
+          [payment.cart_id]
+        );
+      }
+
+      await client.query('COMMIT');
+      res.json({ success: true, message: 'อัปเดตสถานะสำเร็จ', data: result.rows[0] });
+    } catch (innerErr) {
+      await client.query('ROLLBACK');
+      throw innerErr;
+    } finally {
+      client.release();
+    }
   } catch (err) {
     console.error('Update payment status error:', err.message);
     res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });

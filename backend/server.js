@@ -14,6 +14,9 @@ const dashboardRoutes = require('./routes/dashboard');
 const genresRoutes    = require('./routes/genres');
 const cartRoutes      = require('./routes/cart');
 const databaseRoutes  = require('./routes/database');
+const libraryRoutes   = require('./routes/library');
+const playlistsRoutes = require('./routes/playlists');
+const checkoutRoutes  = require('./routes/checkout');
 
 // ─── App Setup ────────────────────────────────────────────────
 const app  = express();
@@ -46,6 +49,12 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/genres',    genresRoutes);
 app.use('/api/cart',      cartRoutes);
 app.use('/api/database',  databaseRoutes);
+app.use('/api/library',   libraryRoutes);
+app.use('/api/playlists', playlistsRoutes);
+app.use('/api/checkout',  checkoutRoutes);
+
+// Serve slip images statically
+app.use('/uploads/slips', express.static(path.join(__dirname, 'uploads/slips')));
 
 // ─── Health Check ─────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

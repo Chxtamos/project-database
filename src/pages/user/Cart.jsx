@@ -2,9 +2,11 @@ import React from 'react';
 import UserLayout from '../../components/UserLayout';
 import { Trash2 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useNavigate } from 'react-router-dom';
 
 const Cart = () => {
-  const { cartMovies, removeFromCart, checkout } = useApp();
+  const navigate = useNavigate();
+  const { cartMovies, removeFromCart, cart } = useApp();
 
   const total = cartMovies.reduce((sum, item) => sum + parseFloat(item.movie_cost || 0), 0);
 
@@ -57,7 +59,7 @@ const Cart = () => {
             </div>
           </div>
           <button 
-            onClick={() => checkout()}
+            onClick={() => navigate('/user/checkout', { state: { total } })}
             disabled={cartMovies.length === 0}
             className="w-full py-4 bg-figma-blue text-white font-bold rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-200 disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed"
           >

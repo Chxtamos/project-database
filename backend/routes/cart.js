@@ -10,9 +10,15 @@ const router = express.Router();
 // ─────────────────────────────────────────────
 router.get('/:user_id', authMiddleware, async (req, res) => {
   try {
-    // หา cart ล่าสุดของ user
+    // หา cart ล่าสุดของ user ที่ยังไม่ถูก approve (ไม่มี payment status=1 ผูกอยู่)
     const cartResult = await pool.query(
-      'SELECT * FROM public.cart WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
+      `SELECT c.* FROM public.cart c
+       WHERE c.user_id = $1
+         AND NOT EXISTS (
+           SELECT 1 FROM public.payment p
+           WHERE p.cart_id = c.cart_id AND p.status = 1
+         )
+       ORDER BY c.created_at DESC LIMIT 1`,
       [req.params.user_id]
     );
 

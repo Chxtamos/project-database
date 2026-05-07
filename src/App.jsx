@@ -18,6 +18,7 @@ import MovieDetail from './pages/user/MovieDetail';
 import Cart from './pages/user/Cart';
 import Library from './pages/user/Library';
 import Playlists from './pages/user/Playlists';
+import Checkout from './pages/user/Checkout';
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
           <Route path="/user/home" element={<Home />} />
           <Route path="/user/movie/:id" element={<MovieDetail />} />
           <Route path="/user/cart" element={<Cart />} />
+          <Route path="/user/checkout" element={<Checkout />} />
           <Route path="/user/library" element={<Library />} />
           <Route path="/user/playlists" element={<Playlists />} />
         </Routes>
