@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import Modal from '../components/Modal';
 import ConfirmModal from '../components/ConfirmModal';
@@ -10,18 +10,39 @@ const ManageReviews = () => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
-  const [reviews, setReviews] = useState([
-    { movie: "Inception", user: "User123", rating: 5, date: "2026-05-01", comment: "Great movie!" },
-    { movie: "The Matrix", user: "User456", rating: 4, date: "2026-05-02", comment: "Classic sci-fi." },
-    { movie: "Interstellar", user: "User789", rating: 3, date: "2026-05-03", comment: "A bit slow but good." },
-  ]);
-
+  const [reviews, setReviews] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [formData, setFormData] = useState({ movie: '', user: '', rating: 5, comment: '' });
+  const [formData, setFormData] = useState({ movie_id: '', user_id: '', rating: 5, comment: '', review_number: 1 });
+
+  const fetchReviews = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/reviews?limit=100', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setReviews(data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
 
   const handleEdit = (idx) => {
     setSelectedId(idx);
-    setFormData(reviews[idx]);
+    const rev = reviews[idx];
+    setFormData({ 
+      movie_id: rev.movie_id, 
+      user_id: rev.user_id, 
+      rating: rev.rating, 
+      comment: rev.comment || '', 
+      review_number: rev.review_number 
+    });
     setIsEditOpen(true);
   };
 
@@ -30,31 +51,75 @@ const ManageReviews = () => {
     setIsDeleteOpen(true);
   };
 
-  const confirmDelete = () => {
-    setReviews(reviews.filter((_, i) => i !== selectedId));
-    setIsDeleteOpen(false);
+  const confirmDelete = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const reviewToDelete = reviews[selectedId];
+      await fetch(`http://localhost:5000/api/reviews/${reviewToDelete.review_id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      fetchReviews();
+      setIsDeleteOpen(false);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleAddSubmit = (e) => {
+  const handleAddSubmit = async (e) => {
     e.preventDefault();
-    const newReview = { ...formData, date: new Date().toISOString().split('T')[0] };
-    setReviews([newReview, ...reviews]);
-    setIsAddOpen(false);
-    setFormData({ movie: '', user: '', rating: 5, comment: '' });
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`http://localhost:5000/api/reviews`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          movie_id: formData.movie_id,
+          user_id: formData.user_id,
+          review_number: formData.review_number,
+          rating: formData.rating,
+          comment: formData.comment
+        })
+      });
+      fetchReviews();
+      setIsAddOpen(false);
+      setFormData({ movie_id: '', user_id: '', rating: 5, comment: '', review_number: 1 });
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleEditSubmit = (e) => {
+  const handleEditSubmit = async (e) => {
     e.preventDefault();
-    const newReviews = [...reviews];
-    newReviews[selectedId] = { ...newReviews[selectedId], rating: formData.rating, comment: formData.comment };
-    setReviews(newReviews);
-    setIsEditOpen(false);
+    try {
+      const token = localStorage.getItem('token');
+      const reviewToEdit = reviews[selectedId];
+      await fetch(`http://localhost:5000/api/reviews/${reviewToEdit.review_id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          rating: formData.rating,
+          comment: formData.comment,
+          review_number: formData.review_number
+        })
+      });
+      fetchReviews();
+      setIsEditOpen(false);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const filteredReviews = reviews.filter(r => 
-    r.movie.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    r.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.comment.toLowerCase().includes(searchTerm.toLowerCase())
+    (r.movie_name && r.movie_name.toLowerCase().includes(searchTerm.toLowerCase())) || 
+    (r.username && r.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (r.comment && r.comment.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -94,11 +159,11 @@ const ManageReviews = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredReviews.map((review, idx) => (
-                <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-gray-600 font-medium cursor-pointer hover:text-figma-blue" onClick={() => handleEdit(idx)}>{review.movie}</td>
-                  <td className="px-6 py-4 text-gray-600">{review.user}</td>
-                  <td className="px-6 py-4 text-gray-600">{review.rating} Stars</td>
-                  <td className="px-6 py-4 text-gray-600">{review.date}</td>
+                <tr key={review.review_id || idx} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 text-gray-600 font-medium cursor-pointer hover:text-figma-blue" onClick={() => handleEdit(idx)}>{review.movie_name}</td>
+                  <td className="px-6 py-4 text-gray-600">{review.username}</td>
+                  <td className="px-6 py-4 text-gray-600 font-bold text-yellow-500">{review.rating} / 5</td>
+                  <td className="px-6 py-4 text-gray-600">{new Date(review.date_review).toLocaleDateString()}</td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
                       <button onClick={() => handleEdit(idx)} className="p-2 text-figma-blue bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 font-medium">
@@ -111,6 +176,13 @@ const ManageReviews = () => {
                   </td>
                 </tr>
               ))}
+              {filteredReviews.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="px-6 py-10 text-center text-gray-500">
+                    No reviews found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -118,17 +190,25 @@ const ManageReviews = () => {
 
       <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title="Add New Review">
         <form className="space-y-4" onSubmit={handleAddSubmit}>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Movie Title</label>
-            <input type="text" required value={formData.movie} onChange={e => setFormData({...formData, movie: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" placeholder="Enter movie title..." />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Movie ID</label>
+              <input type="number" required value={formData.movie_id} onChange={e => setFormData({...formData, movie_id: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" placeholder="Enter movie ID" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">User ID</label>
+              <input type="number" required value={formData.user_id} onChange={e => setFormData({...formData, user_id: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" placeholder="Enter user ID" />
+            </div>
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">User Name</label>
-            <input type="text" required value={formData.user} onChange={e => setFormData({...formData, user: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" placeholder="Enter user name..." />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Rating (1-5)</label>
-            <input type="number" min="1" max="5" required value={formData.rating} onChange={e => setFormData({...formData, rating: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" placeholder="5" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Review Number</label>
+              <input type="number" required value={formData.review_number} onChange={e => setFormData({...formData, review_number: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" placeholder="1" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Rating (1-5)</label>
+              <input type="number" min="1" max="5" step="0.1" required value={formData.rating} onChange={e => setFormData({...formData, rating: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" placeholder="5" />
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Review Comment</label>
@@ -144,8 +224,8 @@ const ManageReviews = () => {
       <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit Review Detail">
         <form className="space-y-4" onSubmit={handleEditSubmit}>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Rating</label>
-            <input type="number" min="1" max="5" required value={formData.rating} onChange={e => setFormData({...formData, rating: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" />
+            <label className="text-sm font-medium text-gray-700">Rating (1-5)</label>
+            <input type="number" min="1" max="5" step="0.1" required value={formData.rating} onChange={e => setFormData({...formData, rating: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Comment</label>

@@ -8,6 +8,7 @@ const API_BASE = 'http://localhost:5000/api';
 const Dashboard = () => {
   const [stats, setStats] = useState({ users: 0, movies: 0 });
   const [trendingMovies, setTrendingMovies] = useState([]);
+  const [pendingPayments, setPendingPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
 
@@ -27,6 +28,15 @@ const Dashboard = () => {
       });
       const userData = await userRes.json();
       
+      // Fetch Pending Payments
+      const paymentRes = await fetch(`${API_BASE}/payments?status=0&limit=5`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const paymentData = await paymentRes.json();
+      if (paymentData.success) {
+        setPendingPayments(paymentData.data);
+      }
+      
       setStats({
         users: userData.total || 0,
         movies: movieData.total || 0,
@@ -45,11 +55,7 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const pendingPayments = [
-    { id: "#PAY-7829", user: "alice.smith@example.com", amount: "$14.99", date: "Oct 24, 2026", status: "Pending" },
-    { id: "#PAY-7830", user: "bob.jones@example.com", amount: "$4.99", date: "Oct 24, 2026", status: "Pending" },
-    { id: "#PAY-7831", user: "charlie.brown@example.com", amount: "$29.99", date: "Oct 23, 2026", status: "Pending" },
-  ];
+  // Removed static pendingPayments array
 
   const getPosterSrc = (path) => {
     if (!path) return '';
@@ -134,35 +140,44 @@ const Dashboard = () => {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50 text-gray-500 font-bold border-b border-gray-200 text-xs uppercase">
+              <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-100 text-xs uppercase">
                 <tr>
-                  <th className="px-6 py-4">Payment ID</th>
-                  <th className="px-6 py-4">User</th>
+                  <th className="px-6 py-4">Transaction ID</th>
+                  <th className="px-6 py-4">Customer</th>
                   <th className="px-6 py-4">Amount</th>
                   <th className="px-6 py-4">Date</th>
                   <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-center">Action</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {pendingPayments.map((pay, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-gray-900">{pay.id}</td>
-                    <td className="px-6 py-4 text-gray-600 font-medium">{pay.user}</td>
-                    <td className="px-6 py-4 font-bold text-gray-900">{pay.amount}</td>
-                    <td className="px-6 py-4 text-gray-500">{pay.date}</td>
+                  <tr key={pay.payment_id || idx} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-gray-600 font-medium">#{pay.payment_id}</td>
+                    <td className="px-6 py-4 text-gray-600">{pay.username || pay.email}</td>
+                    <td className="px-6 py-4 text-gray-600">${parseFloat(pay.amount).toFixed(2)}</td>
+                    <td className="px-6 py-4 text-gray-600">{new Date(pay.payment_date).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
-                      <span className="px-3 py-1 text-xs font-bold bg-orange-100 text-orange-700 rounded-full">
-                        {pay.status}
+                      <span className="px-2 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-600">
+                        Pending
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <button className="p-1.5 text-gray-400 hover:text-figma-blue hover:bg-blue-50 rounded-lg transition-colors">
-                        <Eye size={18} />
-                      </button>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <Link to="/payments?status=Pending" className="p-2 text-figma-blue bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 font-medium">
+                          <Eye size={16} /> View Details
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}
+                {pendingPayments.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-10 text-center text-gray-500">
+                      No pending payments found.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

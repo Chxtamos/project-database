@@ -51,7 +51,7 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    const result = await pool.query('SELECT * FROM public.users WHERE email = $1', [email]);
+    const result = await pool.query('SELECT * FROM public.admins WHERE email = $1', [email]);
     if (result.rows.length === 0) {
       return res.status(401).json({ success: false, message: 'Email หรือรหัสผ่านไม่ถูกต้อง' });
     }
@@ -63,7 +63,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.user_id, email: user.email, username: user.username },
+      { id: user.admin_id, email: user.email, username: user.username, role: 'admin' },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
@@ -73,11 +73,10 @@ router.post('/login', async (req, res) => {
       message: 'เข้าสู่ระบบสำเร็จ',
       token,
       user: {
-        user_id:   user.user_id,
+        user_id:   user.admin_id,
         username:  user.username,
         email:     user.email,
-        telephone: user.telephone,
-        plan:      user.plan,
+        role:      'admin',
       },
     });
   } catch (err) {

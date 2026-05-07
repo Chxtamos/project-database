@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import Modal from '../components/Modal';
 import ConfirmModal from '../components/ConfirmModal';
@@ -10,18 +10,33 @@ const ManageUsers = () => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
-  const [users, setUsers] = useState([
-    { name: "Admin User", email: "admin@movie.com", plan: "Enterprise", date: "2026-01-01", password: "hashed_password" },
-    { name: "John Doe", email: "john@movie.com", plan: "Basic", date: "2026-02-15", password: "hashed_password" },
-    { name: "Jane Smith", email: "jane@movie.com", plan: "Premium", date: "2026-03-10", password: "hashed_password" },
-  ]);
-
+  const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [formData, setFormData] = useState({ name: '', email: '', plan: 'Basic', password: '' });
+  const [formData, setFormData] = useState({ username: '', email: '', plan: 'Basic', password: '', telephone: '' });
+
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/users?limit=100', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setUsers(data.data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const handleEdit = (idx) => {
     setSelectedId(idx);
-    setFormData({ ...users[idx], password: '' }); // Don't show real password hash
+    const user = users[idx];
+    setFormData({ username: user.username, email: user.email, plan: user.plan || 'Basic', telephone: user.telephone || '', password: '' });
     setIsEditOpen(true);
   };
 
@@ -30,32 +45,71 @@ const ManageUsers = () => {
     setIsDeleteOpen(true);
   };
 
-  const confirmDelete = () => {
-    setUsers(users.filter((_, i) => i !== selectedId));
-    setIsDeleteOpen(false);
+  const confirmDelete = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const userToDelete = users[selectedId];
+      await fetch(`http://localhost:5000/api/users/${userToDelete.user_id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      fetchUsers();
+      setIsDeleteOpen(false);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleAddSubmit = (e) => {
+  const handleAddSubmit = async (e) => {
     e.preventDefault();
-    const newUser = { ...formData, date: new Date().toISOString().split('T')[0], password: 'hashed_password' };
-    setUsers([newUser, ...users]);
-    setIsAddOpen(false);
-    setFormData({ name: '', email: '', plan: 'Basic', password: '' });
+    try {
+      await fetch(`http://localhost:5000/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: formData.username,
+          email: formData.email,
+          telephone: formData.telephone || '0000000000',
+          password: formData.password
+        })
+      });
+      fetchUsers();
+      setIsAddOpen(false);
+      setFormData({ username: '', email: '', plan: 'Basic', password: '', telephone: '' });
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleEditSubmit = (e) => {
+  const handleEditSubmit = async (e) => {
     e.preventDefault();
-    const newUsers = [...users];
-    const existing = newUsers[selectedId];
-    newUsers[selectedId] = { ...formData, date: existing.date, password: formData.password ? 'hashed_password' : existing.password };
-    setUsers(newUsers);
-    setIsEditOpen(false);
+    try {
+      const token = localStorage.getItem('token');
+      const userToEdit = users[selectedId];
+      await fetch(`http://localhost:5000/api/users/${userToEdit.user_id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          email: formData.email,
+          plan: formData.plan,
+          telephone: formData.telephone
+        })
+      });
+      fetchUsers();
+      setIsEditOpen(false);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.plan.toLowerCase().includes(searchTerm.toLowerCase())
+    (u.username && u.username.toLowerCase().includes(searchTerm.toLowerCase())) || 
+    (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (u.plan && u.plan.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -95,8 +149,8 @@ const ManageUsers = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredUsers.map((user, idx) => (
-                <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-gray-600 font-medium cursor-pointer hover:text-figma-blue" onClick={() => handleEdit(idx)}>{user.name}</td>
+                <tr key={user.user_id || idx} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 text-gray-600 font-medium cursor-pointer hover:text-figma-blue" onClick={() => handleEdit(idx)}>{user.username}</td>
                   <td className="px-6 py-4 text-gray-600">{user.email}</td>
                   <td className="px-6 py-4 text-gray-600">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -104,10 +158,10 @@ const ManageUsers = () => {
                       user.plan === 'Premium' ? 'bg-blue-100 text-blue-700' :
                       'bg-gray-100 text-gray-700'
                     }`}>
-                      {user.plan}
+                      {user.plan || 'Basic'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-600">{user.date}</td>
+                  <td className="px-6 py-4 text-gray-600">{user.register_date ? new Date(user.register_date).toLocaleDateString() : '-'}</td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
                       <button onClick={() => handleEdit(idx)} className="p-2 text-figma-blue bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 font-medium">
@@ -128,8 +182,8 @@ const ManageUsers = () => {
       <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title="Add New User">
         <form className="space-y-4" onSubmit={handleAddSubmit}>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Full Name</label>
-            <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" placeholder="Enter full name..." />
+            <label className="text-sm font-medium text-gray-700">User Name</label>
+            <input type="text" required value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" placeholder="Enter username..." />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Email Address</label>
@@ -157,17 +211,17 @@ const ManageUsers = () => {
       <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit User Profile">
         <form className="space-y-4" onSubmit={handleEditSubmit}>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Full Name</label>
-            <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" />
+            <label className="text-sm font-medium text-gray-700">User Name</label>
+            <input type="text" required value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Email Address</label>
-            <input type="text" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" />
+            <input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Password (Leave blank to keep current)</label>
-            <input type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" placeholder="••••••••" />
-            <p className="text-xs text-gray-400 mt-1">Passwords are securely hashed in the database.</p>
+            <input type="password" disabled value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm cursor-not-allowed" placeholder="Cannot update here" />
+            <p className="text-xs text-gray-400 mt-1">Passwords are securely hashed in the database and cannot be changed here.</p>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">User Plan</label>
