@@ -20,7 +20,7 @@
 ### 1. Clone โปรเจค
 
 ```bash
-git clone https://github.com/Chxtamos/project-database.git
+git clone -b Beta1 https://github.com/Chxtamos/project-database.git
 cd project-database
 ```
 
