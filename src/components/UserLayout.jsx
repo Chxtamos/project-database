@@ -1,8 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Library, Playlists, User, Search } from 'lucide-react';
+import { ShoppingCart, User, Search } from 'lucide-react';
+
+import { useApp } from '../context/AppContext';
 
 const UserLayout = ({ children, pageTitle }) => {
+  const { cartMovies } = useApp();
+
   return (
     <div className="min-h-screen bg-figma-bg font-inter text-figma-dark">
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
@@ -28,7 +32,11 @@ const UserLayout = ({ children, pageTitle }) => {
               </div>
               <Link to="/user/cart" className="p-2 text-gray-600 hover:bg-gray-100 rounded-full relative transition-colors">
                 <ShoppingCart size={20} />
-                <span className="absolute top-0 right-0 bg-figma-blue text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">3</span>
+                {cartMovies && cartMovies.length > 0 && (
+                  <span className="absolute top-0 right-0 bg-figma-blue text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                    {cartMovies.length}
+                  </span>
+                )}
               </Link>
               <Link to="/user/profile" className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
                 <User size={20} />

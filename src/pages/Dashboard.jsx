@@ -110,7 +110,7 @@ const Dashboard = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {trendingMovies.map((movie) => (
               <div key={movie.movie_id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col group cursor-pointer hover:shadow-md transition-shadow">
-                <div className="h-48 bg-gray-200 overflow-hidden relative">
+                <div className="aspect-[2/3] w-full bg-gray-200 overflow-hidden relative">
                   <img src={getPosterSrc(movie.movie_poster)} alt={movie.movie_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 </div>

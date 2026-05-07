@@ -1,88 +1,244 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import UserLayout from '../../components/UserLayout';
 import Modal from '../../components/Modal';
 import ConfirmModal from '../../components/ConfirmModal';
-import { Star, Flag, Send } from 'lucide-react';
+import { Star, Flag, Send, Loader2, ShoppingCart } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
+
+const API_BASE = 'http://localhost:5000/api';
 
 const MovieDetail = () => {
+  const { id } = useParams();
+  const { addToCart } = useApp();
+  const [movie, setMovie] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [reportId, setReportId] = useState(null);
+  const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
 
-  const reviews = [
-    { id: 1, user: "Alex", rating: 5, comment: "Mind-blowing experience!", date: "2 days ago" },
-    { id: 2, user: "Jordan", rating: 4, comment: "Great visuals, but a bit long.", date: "1 week ago" },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        
+        // Fetch movie details
+        const movieRes = await fetch(`${API_BASE}/movies/${id}`);
+        const movieData = await movieRes.json();
+        if (movieData.success) {
+          setMovie(movieData.data);
+        }
+        
+        // Fetch reviews
+        if (token) {
+          const reviewRes = await fetch(`${API_BASE}/reviews?movie_id=${id}&limit=100`, { headers });
+          const reviewData = await reviewRes.json();
+          if (reviewData.success) {
+            setReviews(reviewData.data);
+          }
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
+
+  const getPosterSrc = (path) => {
+    if (!path) return 'https://via.placeholder.com/400x600?text=No+Poster';
+    if (path.startsWith('http')) return path;
+    return `http://localhost:5000${path}`;
+  };
+
+  const submitReview = async (e) => {
+    e.preventDefault();
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user) return alert("Please login first");
+      
+      const res = await fetch(`${API_BASE}/reviews`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          user_id: user.user_id,
+          movie_id: id,
+          review_number: reviews.length + 1,
+          rating: newReview.rating,
+          comment: newReview.comment
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setReviews([{ ...data.data, username: user.username, date_review: new Date().toISOString() }, ...reviews]);
+        setIsReviewOpen(false);
+        setNewReview({ rating: 5, comment: '' });
+      } else {
+        alert(data.message || "Failed to submit review");
+      }
+    } catch(err) {
+      console.error(err);
+      alert("Error submitting review");
+    }
+  };
+
+  if (loading) {
+    return (
+      <UserLayout>
+        <div className="flex flex-col items-center justify-center py-40 text-gray-400">
+          <Loader2 className="animate-spin mb-4" size={40} />
+          <p className="text-lg">Loading movie details...</p>
+        </div>
+      </UserLayout>
+    );
+  }
+
+  if (!movie) {
+    return (
+      <UserLayout>
+        <div className="text-center py-40 text-gray-500 font-bold text-xl">Movie not found.</div>
+      </UserLayout>
+    );
+  }
 
   return (
     <UserLayout>
       <div className="flex flex-col lg:flex-row gap-12">
         <div className="w-full lg:w-1/3">
-          <div className="aspect-[2/3] bg-gray-200 rounded-3xl overflow-hidden shadow-2xl">
-            <img src="https://api.dicebear.com/7.x/shapes/svg?seed=1" className="w-full h-full object-cover" alt="poster" />
+          <div className="aspect-[2/3] bg-gray-200 rounded-3xl overflow-hidden shadow-2xl relative">
+            <img src={getPosterSrc(movie.movie_poster)} className="w-full h-full object-cover" alt={movie.movie_name} />
           </div>
         </div>
         <div className="flex-1 space-y-8">
           <div>
-            <h1 className="text-5xl font-bold mb-4">Inception</h1>
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex text-yellow-400"><Star size={20} fill="currentColor" /> <span className="ml-1 font-bold text-figma-dark">4.8</span></div>
-              <span className="text-gray-400 text-sm">1.2K Reviews</span>
-              <span className="px-3 py-1 bg-gray-100 rounded-full text-xs font-medium">Sci-Fi</span>
+            <h1 className="text-4xl lg:text-5xl font-black mb-4 tracking-tight text-gray-900">{movie.movie_name}</h1>
+            <div className="flex flex-wrap items-center gap-3 mb-6">
+              <div className="flex items-center text-yellow-400 bg-yellow-50 px-3 py-1 rounded-full border border-yellow-100">
+                <Star size={16} fill="currentColor" /> 
+                <span className="ml-1.5 font-bold text-yellow-700">{movie.movie_rating || 'N/A'}</span>
+              </div>
+              <span className="text-gray-500 text-sm font-medium">{reviews.length} Reviews</span>
+              {movie.genres && movie.genres.map(g => (
+                <span key={g.genre_id} className="px-3 py-1 bg-blue-50 text-figma-blue rounded-full text-xs font-bold border border-blue-100">
+                  {g.genre_name}
+                </span>
+              ))}
             </div>
-            <p className="text-gray-600 leading-relaxed text-lg">
-              A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.
-            </p>
-            <button className="mt-8 px-8 py-4 bg-figma-blue text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95">
-              Purchase Movie - $12.99
+            
+            <div className="prose prose-gray max-w-none mb-8">
+              <p className="text-gray-600 leading-relaxed text-lg">
+                <strong>Released Date:</strong> {new Date(movie.movie_releasedate).toLocaleDateString()}
+              </p>
+              {movie.actors && movie.actors.length > 0 && (
+                <p className="text-gray-600 text-sm mt-2">
+                  <strong>Cast:</strong> {movie.actors.map(a => a.actor_name).join(', ')}
+                </p>
+              )}
+            </div>
+
+            <button 
+              onClick={() => addToCart(movie.movie_id)}
+              className="mt-4 px-8 py-4 bg-figma-blue text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95 flex items-center justify-center gap-2"
+            >
+              <ShoppingCart size={20} /> Add to Cart - ${parseFloat(movie.movie_cost || 0).toFixed(2)}
             </button>
           </div>
 
-          <div className="pt-8 border-t border-gray-200">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">User Reviews</h2>
-              <button onClick={() => setIsReviewOpen(true)} className="text-figma-blue font-bold text-sm hover:underline flex items-center gap-1">
-                Write a Review
+          <div className="pt-10 border-t border-gray-100">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-black text-gray-900">User Reviews</h2>
+              <button onClick={() => setIsReviewOpen(true)} className="px-4 py-2 bg-gray-50 text-figma-blue font-bold text-sm rounded-xl hover:bg-blue-50 transition-colors flex items-center gap-2">
+                <Star size={16} /> Write a Review
               </button>
             </div>
             <div className="space-y-4">
               {reviews.map(r => (
-                <div key={r.id} className="p-4 bg-white border border-gray-100 rounded-2xl shadow-sm">
-                  <div className="flex justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm">{r.user}</span>
-                      <div className="flex text-yellow-400"><Star size={12} fill="currentColor" /> <span className="text-xs ml-1">{r.rating}</span></div>
+                <div key={r.review_id || Math.random()} className="p-5 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 text-figma-blue flex items-center justify-center font-bold text-xs uppercase">
+                        {(r.username || 'U')[0]}
+                      </div>
+                      <div>
+                        <span className="font-bold text-sm block text-gray-900">{r.username || 'Anonymous'}</span>
+                        <div className="flex items-center text-yellow-400 mt-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} size={10} fill={i < r.rating ? "currentColor" : "none"} className={i < r.rating ? "text-yellow-400" : "text-gray-200"} />
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    <button onClick={() => { setReportId(r.id); setIsReportOpen(true); }} className="text-gray-400 hover:text-red-500 transition-colors">
+                    <button onClick={() => { setReportId(r.review_id); setIsReportOpen(true); }} className="text-gray-300 hover:text-red-500 transition-colors p-1" title="Report Review">
                       <Flag size={14} />
                     </button>
                   </div>
-                  <p className="text-gray-600 text-sm">{r.comment}</p>
-                  <span className="text-[10px] text-gray-400 mt-2 block">{r.date}</span>
+                  <p className="text-gray-600 text-sm leading-relaxed">{r.comment}</p>
+                  <span className="text-[10px] font-medium text-gray-400 mt-3 block">
+                    {r.date_review ? new Date(r.date_review).toLocaleDateString() : 'Just now'}
+                  </span>
                 </div>
               ))}
+              {reviews.length === 0 && (
+                <div className="p-10 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                  <Star size={32} className="mx-auto text-gray-300 mb-3" />
+                  <p className="text-gray-500 font-medium text-sm">No reviews yet. Be the first to review!</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
       <Modal isOpen={isReviewOpen} onClose={() => setIsReviewOpen(false)} title="Write a Review">
-        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-          <div className="flex gap-2 mb-4">
-            {[1,2,3,4,5].map(s => <Star key={s} size={24} className="text-gray-300 hover:text-yellow-400 cursor-pointer transition-colors" />)}
+        <form className="space-y-5" onSubmit={submitReview}>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Your Rating</label>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map(s => (
+                <Star 
+                  key={s} 
+                  size={32} 
+                  className={`cursor-pointer transition-all hover:scale-110 ${s <= newReview.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`} 
+                  onClick={() => setNewReview({...newReview, rating: s})}
+                />
+              ))}
+            </div>
           </div>
-          <textarea className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" rows="4" placeholder="Share your thoughts about this movie..."></textarea>
-          <div className="flex justify-end gap-3">
-            <button type="button" onClick={() => setIsReviewOpen(false)} className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-xl transition-colors">Cancel</button>
-            <button type="submit" className="px-6 py-2 bg-figma-blue text-white font-bold rounded-xl hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-2">
-              <Send size={16} /> Submit
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Your Thoughts</label>
+            <textarea 
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm resize-none" 
+              rows="4" 
+              placeholder="What did you think of the movie? (Optional)"
+              value={newReview.comment}
+              onChange={(e) => setNewReview({...newReview, comment: e.target.value})}
+            ></textarea>
+          </div>
+          <div className="pt-2 flex justify-end gap-3">
+            <button type="button" onClick={() => setIsReviewOpen(false)} className="px-5 py-2.5 text-gray-600 font-bold hover:bg-gray-100 rounded-xl transition-colors">Cancel</button>
+            <button type="submit" className="px-6 py-2.5 bg-figma-blue text-white font-bold rounded-xl hover:bg-blue-700 transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-blue-200">
+              <Send size={16} /> Submit Review
             </button>
           </div>
         </form>
       </Modal>
 
-      <ConfirmModal isOpen={isReportOpen} onClose={() => setIsReportOpen(false)} onConfirm={() => { console.log("Reported Review:", reportId); setIsReportOpen(false); }} title="Report Review" message="Are you sure you want to report this review to the administration for moderation?" />
-    </Layout>
+      <ConfirmModal 
+        isOpen={isReportOpen} 
+        onClose={() => setIsReportOpen(false)} 
+        onConfirm={() => { console.log("Reported Review ID:", reportId); setIsReportOpen(false); }} 
+        title="Report Review" 
+        message="Are you sure you want to report this review to the administration for moderation? This action cannot be undone." 
+      />
+    </UserLayout>
   );
 };
 

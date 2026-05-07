@@ -1,39 +1,74 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import UserLayout from '../../components/UserLayout';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
 
-const movies = [
-  { id: 1, title: "Inception", price: "$12.99", img: "https://api.dicebear.com/7.x/shapes/svg?seed=1" },
-  { id: 2, title: "The Matrix", price: "$14.99", img: "https://api.dicebear.com/7.x/shapes/svg?seed=2" },
-  { id: 3, title: "Interstellar", price: "$10.99", img: "https://api.dicebear.com/7.x/shapes/svg?seed=3" },
-  { id: 4, title: "The Dark Knight", price: "$12.99", img: "https://api.dicebear.com/7.x/shapes/svg?seed=4" },
-  { id: 5, title: "Avatar", price: "$15.99", img: "https://api.dicebear.com/7.x/shapes/svg?seed=5" },
-  { id: 6, title: "Tenet", price: "$11.99", img: "https://api.dicebear.com/7.x/shapes/svg?seed=6" },
-];
+const API_BASE = 'http://localhost:5000/api';
 
 const Home = () => {
   const navigate = useNavigate();
+  const { addToCart } = useApp();
+  const [movies, setMovies] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/movies`);
+        const data = await res.json();
+        if (data.success) {
+          setMovies(data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch movies:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMovies();
+  }, []);
+
+  const getPosterSrc = (path) => {
+    if (!path) return 'https://via.placeholder.com/200x300?text=No+Poster';
+    if (path.startsWith('http')) return path;
+    return `http://localhost:5000${path}`;
+  };
   return (
     <UserLayout pageTitle="Discover Movies">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-        {movies.map(movie => (
-          <div key={movie.id} className="group bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
-            <div className="aspect-[2/3] relative overflow-hidden cursor-pointer" onClick={() => navigate(`/user/movie/${movie.id}`)}>
-              <img src={movie.img} alt={movie.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-            </div>
-            <div className="p-3">
-              <h3 className="font-bold text-sm truncate">{movie.title}</h3>
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-figma-blue font-bold text-sm">{movie.price}</span>
-                <button className="p-1.5 bg-figma-blue text-white rounded-lg hover:bg-blue-700 transition-colors">
-                  <ShoppingCart size={14} />
-                </button>
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+          <Loader2 className="animate-spin mb-2" size={32} />
+          <p className="text-sm">Loading movies...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+          {movies.map(movie => (
+            <div key={movie.movie_id} className="group bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
+              <div className="aspect-[2/3] relative overflow-hidden cursor-pointer" onClick={() => navigate(`/user/movie/${movie.movie_id}`)}>
+                <img src={getPosterSrc(movie.movie_poster)} alt={movie.movie_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+              </div>
+              <div className="p-3">
+                <h3 className="font-bold text-sm truncate">{movie.movie_name}</h3>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-figma-blue font-bold text-sm">${parseFloat(movie.movie_cost || 0).toFixed(2)}</span>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); addToCart(movie.movie_id); }}
+                    className="p-1.5 bg-figma-blue text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <ShoppingCart size={14} />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+          {movies.length === 0 && (
+            <div className="col-span-full py-10 text-center text-gray-500">
+              No movies found.
+            </div>
+          )}
+        </div>
+      )}
     </UserLayout>
   );
 };

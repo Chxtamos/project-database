@@ -3,36 +3,14 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 
 // Admin Pages
-import Dashboard from './pages/admin/Dashboard';
+import Dashboard from './pages/Dashboard';
 import LoginPage from './pages/LoginPage';
-<<<<<<< Updated upstream
 import ManageMovies from './pages/ManageMovies';
 import ManagePayments from './pages/ManagePayments';
 import ManageReviews from './pages/ManageReviews';
 import ManageUsers from './pages/ManageUsers';
 import SystemReport from './pages/SystemReport';
 import DatabaseMonitor from './pages/DatabaseMonitor';
-
-function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/movies" element={<ManageMovies />} />
-        <Route path="/payments" element={<ManagePayments />} />
-        <Route path="/reviews" element={<ManageReviews />} />
-        <Route path="/users" element={<ManageUsers />} />
-        <Route path="/report" element={<SystemReport />} />
-        <Route path="/database" element={<DatabaseMonitor />} />
-      </Routes>
-    </Router>
-=======
-import ManageMovies from './pages/admin/ManageMovies';
-import ManagePayments from './pages/admin/ManagePayments';
-import ManageReviews from './pages/admin/ManageReviews';
-import ManageUsers from './pages/admin/ManageUsers';
-import SystemReport from './pages/admin/SystemReport';
 
 // User Pages
 import Home from './pages/user/Home';
@@ -54,6 +32,7 @@ function App() {
           <Route path="/reviews" element={<ManageReviews />} />
           <Route path="/users" element={<ManageUsers />} />
           <Route path="/report" element={<SystemReport />} />
+          <Route path="/database" element={<DatabaseMonitor />} />
 
           {/* User Routes */}
           <Route path="/user/home" element={<Home />} />
@@ -64,7 +43,6 @@ function App() {
         </Routes>
       </Router>
     </AppProvider>
->>>>>>> Stashed changes
   );
 }
 
