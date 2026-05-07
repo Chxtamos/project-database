@@ -1,9 +1,3 @@
-# project-database
-ภาพด้านล่างเป็นเกย์
-<img width="3060" height="4080" alt="20260506_200516" src="https://github.com/user-attachments/assets/cd01b033-91b7-4110-9cfb-39394987381c" />
-
-
-
 # 🎬 Movie Streaming Admin Panel
 
 ระบบ Admin Dashboard สำหรับจัดการข้อมูลหนัง ผู้ใช้งาน การชำระเงิน และรีวิว พร้อมระบบ Database Monitor ในตัว
