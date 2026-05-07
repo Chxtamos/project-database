@@ -208,7 +208,7 @@ project-database/
 
 | Email | Password | Role |
 |-------|----------|------|
-| admin@movie.com | admin1234 | Admin |
+| admin@movie.com | admin | Admin |
 
 ---
 
