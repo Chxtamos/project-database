@@ -44,6 +44,7 @@ PORT=5000
 
 ---
 
+<<<<<<< Updated upstream
 ## 🐳 รัน Database + Adminer ด้วย Docker
 
 > ต้องติดตั้ง [Docker Desktop](https://www.docker.com/products/docker-desktop/) ก่อน
@@ -234,3 +235,7 @@ Stop-Process -Id (Get-NetTCPConnection -LocalPort 5000 -State Listen).OwningProc
 docker-compose down -v     # ลบ volume ข้อมูลทั้งหมด
 docker-compose up -d       # สร้างใหม่พร้อม schema
 ```
+=======
+---
+**Developed with ⚡ for Enterprise-Grade Performance.**
+>>>>>>> Stashed changes
