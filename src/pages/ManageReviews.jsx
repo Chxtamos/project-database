@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import Modal from '../components/Modal';
 import ConfirmModal from '../components/ConfirmModal';
-import { Pencil, Trash2, Plus, Search, Filter } from 'lucide-react';
+import { Pencil, Trash2, Search, Filter } from 'lucide-react';
 
 const ManageReviews = () => {
-  const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
@@ -66,31 +65,7 @@ const ManageReviews = () => {
     }
   };
 
-  const handleAddSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem('token');
-      await fetch(`http://localhost:5000/api/reviews`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
-        },
-        body: JSON.stringify({
-          movie_id: formData.movie_id,
-          user_id: formData.user_id,
-          review_number: formData.review_number,
-          rating: formData.rating,
-          comment: formData.comment
-        })
-      });
-      fetchReviews();
-      setIsAddOpen(false);
-      setFormData({ movie_id: '', user_id: '', rating: 5, comment: '', review_number: 1 });
-    } catch (err) {
-      console.error(err);
-    }
-  };
+
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
@@ -141,10 +116,7 @@ const ManageReviews = () => {
               <Filter size={18} />
             </button>
           </div>
-          <button onClick={() => setIsAddOpen(true)} className="px-4 py-2 bg-figma-blue text-white rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-blue-700 transition-all active:scale-95">
-            <Plus size={18} />
-            Add Review
-          </button>
+
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -188,38 +160,7 @@ const ManageReviews = () => {
         </div>
       </div>
 
-      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title="Add New Review">
-        <form className="space-y-4" onSubmit={handleAddSubmit}>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Movie ID</label>
-              <input type="number" required value={formData.movie_id} onChange={e => setFormData({...formData, movie_id: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" placeholder="Enter movie ID" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">User ID</label>
-              <input type="number" required value={formData.user_id} onChange={e => setFormData({...formData, user_id: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" placeholder="Enter user ID" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Review Number</label>
-              <input type="number" required value={formData.review_number} onChange={e => setFormData({...formData, review_number: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" placeholder="1" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Rating (1-5)</label>
-              <input type="number" min="1" max="5" step="0.1" required value={formData.rating} onChange={e => setFormData({...formData, rating: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" placeholder="5" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Review Comment</label>
-            <textarea required value={formData.comment} onChange={e => setFormData({...formData, comment: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" rows="3" placeholder="Write review..."></textarea>
-          </div>
-          <div className="pt-4 flex justify-end gap-3">
-            <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-xl transition-colors">Cancel</button>
-            <button type="submit" className="px-6 py-2 bg-figma-blue text-white font-bold rounded-xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-200">Save Review</button>
-          </div>
-        </form>
-      </Modal>
+
 
       <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit Review Detail">
         <form className="space-y-4" onSubmit={handleEditSubmit}>
