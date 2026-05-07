@@ -7,6 +7,7 @@ import ManagePayments from './pages/ManagePayments';
 import ManageReviews from './pages/ManageReviews';
 import ManageUsers from './pages/ManageUsers';
 import SystemReport from './pages/SystemReport';
+import DatabaseMonitor from './pages/DatabaseMonitor';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/reviews" element={<ManageReviews />} />
         <Route path="/users" element={<ManageUsers />} />
         <Route path="/report" element={<SystemReport />} />
+        <Route path="/database" element={<DatabaseMonitor />} />
       </Routes>
     </Router>
   );
