@@ -16,8 +16,8 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
-# Upload files (ไม่ push รูปที่ upload)
-backend/uploads/
+# Upload files (Allowing images to be tracked as requested)
+# backend/uploads/
 
 # Editor
 .vscode/

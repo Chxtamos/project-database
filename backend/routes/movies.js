@@ -130,7 +130,7 @@ router.get('/:id', async (req, res) => {
 // genre_ids: comma-separated string "1,2,3"
 // ─────────────────────────────────────────────
 router.post('/', authMiddleware, upload.single('poster'), async (req, res) => {
-  const { movie_name, movie_cost, movie_rating, movie_releasedate, genre_ids } = req.body;
+  const { movie_name, movie_cost, movie_rating, movie_releasedate, genre_ids, poster_url } = req.body;
 
   if (!movie_name || !movie_cost || !movie_releasedate) {
     return res.status(400).json({ success: false, message: 'movie_name, movie_cost, movie_releasedate เป็นข้อมูลที่จำเป็น' });
@@ -138,7 +138,7 @@ router.post('/', authMiddleware, upload.single('poster'), async (req, res) => {
 
   const poster = req.file
     ? `/uploads/posters/${req.file.filename}`
-    : 'https://example.com/default-poster.png';
+    : (poster_url || 'https://example.com/default-poster.png');
 
   const client = await pool.connect();
   try {
@@ -154,7 +154,12 @@ router.post('/', authMiddleware, upload.single('poster'), async (req, res) => {
 
     // เพิ่ม genres ถ้ามี
     if (genre_ids) {
-      const ids = genre_ids.split(',').map(id => parseInt(id.trim())).filter(Boolean);
+      let ids = [];
+      if (Array.isArray(genre_ids)) {
+        ids = genre_ids.map(id => parseInt(id)).filter(Boolean);
+      } else if (typeof genre_ids === 'string') {
+        ids = genre_ids.split(',').map(id => parseInt(id.trim())).filter(Boolean);
+      }
       for (const gid of ids) {
         await client.query(
           'INSERT INTO public.movie_genre (movie_id, genre_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
@@ -178,7 +183,7 @@ router.post('/', authMiddleware, upload.single('poster'), async (req, res) => {
 // PUT /api/movies/:id
 // ─────────────────────────────────────────────
 router.put('/:id', authMiddleware, upload.single('poster'), async (req, res) => {
-  const { movie_name, movie_cost, movie_rating, movie_releasedate, genre_ids } = req.body;
+  const { movie_name, movie_cost, movie_rating, movie_releasedate, genre_ids, poster_url } = req.body;
 
   const client = await pool.connect();
   try {
@@ -189,7 +194,7 @@ router.put('/:id', authMiddleware, upload.single('poster'), async (req, res) => 
     }
 
     const old = existing.rows[0];
-    const poster = req.file ? `/uploads/posters/${req.file.filename}` : old.movie_poster;
+    const poster = req.file ? `/uploads/posters/${req.file.filename}` : (poster_url || old.movie_poster);
 
     await client.query('BEGIN');
 
@@ -215,7 +220,12 @@ router.put('/:id', authMiddleware, upload.single('poster'), async (req, res) => 
     // อัปเดต genres ถ้ามี genre_ids ส่งมา
     if (genre_ids !== undefined) {
       await client.query('DELETE FROM public.movie_genre WHERE movie_id = $1', [req.params.id]);
-      const ids = genre_ids.split(',').map(id => parseInt(id.trim())).filter(Boolean);
+      let ids = [];
+      if (Array.isArray(genre_ids)) {
+        ids = genre_ids.map(id => parseInt(id)).filter(Boolean);
+      } else if (typeof genre_ids === 'string') {
+        ids = genre_ids.split(',').map(id => parseInt(id.trim())).filter(Boolean);
+      }
       for (const gid of ids) {
         await client.query(
           'INSERT INTO public.movie_genre (movie_id, genre_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',

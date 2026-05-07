@@ -63,6 +63,7 @@ CREATE TABLE public.users (
     email         VARCHAR(100) NOT NULL UNIQUE,
     telephone     VARCHAR(15)  NOT NULL UNIQUE,
     password      TEXT         NOT NULL,
+    plan          VARCHAR(20)  DEFAULT 'Free',
     register_date TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -203,17 +204,17 @@ CREATE TRIGGER trg_set_completed_at
 -- ============================================================
 
 -- users (10 sample users)
-INSERT INTO public.users (username, email, telephone, password) VALUES
-    ('user_1',  'test1@example.com',  '081234561',  'hashed_password_example'),
-    ('user_2',  'test2@example.com',  '081234562',  'hashed_password_example'),
-    ('user_3',  'test3@example.com',  '081234563',  'hashed_password_example'),
-    ('user_4',  'test4@example.com',  '081234564',  'hashed_password_example'),
-    ('user_5',  'test5@example.com',  '081234565',  'hashed_password_example'),
-    ('user_6',  'test6@example.com',  '081234566',  'hashed_password_example'),
-    ('user_7',  'test7@example.com',  '081234567',  'hashed_password_example'),
-    ('user_8',  'test8@example.com',  '081234568',  'hashed_password_example'),
-    ('user_9',  'test9@example.com',  '081234569',  'hashed_password_example'),
-    ('user_10', 'test10@example.com', '0812345610', 'hashed_password_example');
+INSERT INTO public.users (username, email, telephone, password, plan) VALUES
+    ('user_1',  'test1@example.com',  '081234561',  '$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS', 'Premium'),
+    ('user_2',  'test2@example.com',  '081234562',  '$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS', 'Free'),
+    ('user_3',  'test3@example.com',  '081234563',  '$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS', 'Premium'),
+    ('user_4',  'test4@example.com',  '081234564',  '$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS', 'Free'),
+    ('user_5',  'test5@example.com',  '081234565',  '$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS', 'Premium'),
+    ('user_6',  'test6@example.com',  '081234566',  '$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS', 'Free'),
+    ('user_7',  'test7@example.com',  '081234567',  '$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS', 'Free'),
+    ('user_8',  'test8@example.com',  '081234568',  '$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS', 'Free'),
+    ('user_9',  'test9@example.com',  '081234569',  '$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS', 'Free'),
+    ('user_10', 'test10@example.com', '0812345610', '$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS', 'Free');
 
 -- genre
 INSERT INTO public.genre (genre_name) VALUES

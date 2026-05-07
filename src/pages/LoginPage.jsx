@@ -7,9 +7,31 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const [error, setError] = useState('');
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    navigate('/dashboard');
+    setError('');
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        navigate('/dashboard');
+      } else {
+        setError(data.message || 'Login failed');
+      }
+    } catch (err) {
+      setError('Could not connect to server');
+    }
   };
 
   return (
@@ -20,6 +42,11 @@ const LoginPage = () => {
           <h1 className="text-3xl font-bold text-figma-dark">Welcome Back</h1>
           <p className="text-gray-500 mt-2">Login to manage your streaming platform</p>
         </div>
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 text-sm font-medium rounded-xl text-center">
+            {error}
+          </div>
+        )}
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 ml-1">Email Address</label>

@@ -28,7 +28,7 @@ router.post('/register', async (req, res) => {
     const result = await pool.query(
       `INSERT INTO public.users (username, email, telephone, password)
        VALUES ($1, $2, $3, $4)
-       RETURNING user_id, username, email, telephone, created_at`,
+       RETURNING user_id, username, email, telephone, plan, register_date`,
       [username, email, telephone, hashed]
     );
 
@@ -77,6 +77,7 @@ router.post('/login', async (req, res) => {
         username:  user.username,
         email:     user.email,
         telephone: user.telephone,
+        plan:      user.plan,
       },
     });
   } catch (err) {
