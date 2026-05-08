@@ -185,14 +185,25 @@ const MovieDetail = () => {
             </div>
             
             <div className="prose prose-gray max-w-none mb-8">
-              <p className="text-gray-600 leading-relaxed text-lg">
-                <strong>Released Date:</strong> {new Date(movie.movie_releasedate).toLocaleDateString()}
-              </p>
-              {movie.actors && movie.actors.length > 0 && (
-                <p className="text-gray-600 text-sm mt-2">
-                  <strong>Cast:</strong> {movie.actors.map(a => a.actor_name).join(', ')}
-                </p>
+              {movie.detail && movie.detail !== '-' && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">เรื่องย่อ (Synopsis)</h3>
+                  <p className="text-gray-600 leading-relaxed text-sm whitespace-pre-wrap">
+                    {movie.detail}
+                  </p>
+                </div>
               )}
+              
+              <div className="space-y-2">
+                <p className="text-gray-600 text-sm">
+                  <strong>Released Date:</strong> {new Date(movie.movie_releasedate).toLocaleDateString()}
+                </p>
+                {movie.actors && movie.actors.length > 0 && (
+                  <p className="text-gray-600 text-sm">
+                    <strong>Cast:</strong> {movie.actors.map(a => a.actor_name).join(', ')}
+                  </p>
+                )}
+              </div>
             </div>
 
             {!isOwned ? (

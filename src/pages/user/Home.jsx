@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import UserLayout from '../../components/UserLayout';
-import { ShoppingCart, Loader2 } from 'lucide-react';
+import { ShoppingCart, Loader2, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 
@@ -54,8 +54,19 @@ const Home = () => {
                 <img src={getPosterSrc(movie.movie_poster)} alt={movie.movie_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
               </div>
               <div className="p-3">
-                <h3 className="font-bold text-sm truncate">{movie.movie_name}</h3>
-                <div className="flex items-center justify-between mt-2">
+                <h3 className="font-bold text-sm truncate" title={movie.movie_name}>{movie.movie_name}</h3>
+                
+                <div className="flex items-center justify-between mt-1 mb-2">
+                  <div className="flex items-center text-xs text-yellow-500 font-bold">
+                    <Star size={12} className="fill-yellow-400 text-yellow-400 mr-1" />
+                    {movie.movie_rating ? `${movie.movie_rating}/5` : 'N/A'}
+                  </div>
+                  <div className="text-[10px] text-gray-400 font-medium">
+                    {movie.movie_releasedate ? new Date(movie.movie_releasedate).toLocaleDateString() : ''}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
                   <span className="text-figma-blue font-bold text-sm">${parseFloat(movie.movie_cost || 0).toFixed(2)}</span>
                   {!library.includes(movie.movie_id) ? (
                     <button 
