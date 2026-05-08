@@ -203,6 +203,11 @@ const MovieDetail = () => {
                     <strong>Cast:</strong> {movie.actors.map(a => a.actor_name).join(', ')}
                   </p>
                 )}
+                {movie.authors && movie.authors.length > 0 && (
+                  <p className="text-gray-600 text-sm">
+                    <strong>Author:</strong> {movie.authors.map(a => a.author_name).join(', ')}
+                  </p>
+                )}
               </div>
             </div>
 

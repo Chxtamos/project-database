@@ -17,6 +17,7 @@ const databaseRoutes  = require('./routes/database');
 const libraryRoutes   = require('./routes/library');
 const playlistsRoutes = require('./routes/playlists');
 const checkoutRoutes  = require('./routes/checkout');
+const creditsRoutes   = require('./routes/credits');
 
 // ─── App Setup ────────────────────────────────────────────────
 const app  = express();
@@ -52,6 +53,7 @@ app.use('/api/database',  databaseRoutes);
 app.use('/api/library',   libraryRoutes);
 app.use('/api/playlists', playlistsRoutes);
 app.use('/api/checkout',  checkoutRoutes);
+app.use('/api/credits',   creditsRoutes);
 
 // Serve slip images statically
 app.use('/uploads/slips', express.static(path.join(__dirname, 'uploads/slips')));

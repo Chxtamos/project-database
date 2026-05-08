@@ -6,6 +6,16 @@ const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
+const parseIds = (value) => {
+  if (Array.isArray(value)) {
+    return value.map(id => parseInt(id)).filter(Boolean);
+  }
+  if (typeof value === 'string') {
+    return value.split(',').map(id => parseInt(id.trim())).filter(Boolean);
+  }
+  return [];
+};
+
 // ─── Multer สำหรับอัพโหลด poster ───────────────────────────────
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, '../uploads/posters')),
@@ -25,8 +35,10 @@ const upload = multer({
 // Query: ?search=&genre_id=&page=1&limit=10
 // ─────────────────────────────────────────────
 router.get('/', async (req, res) => {
-  const { search = '', genre_id = '', page = 1, limit = 10 } = req.query;
-  const offset = (parseInt(page) - 1) * parseInt(limit);
+  const { search = '', genre_id = '', page = 1, limit } = req.query;
+  const pageNumber = parseInt(page) || 1;
+  const limitNumber = limit ? parseInt(limit) : null;
+  const offset = limitNumber ? (pageNumber - 1) * limitNumber : 0;
 
   try {
     const conditions = [];
@@ -54,7 +66,12 @@ router.get('/', async (req, res) => {
     );
     const total = parseInt(countResult.rows[0].count);
 
-    values.push(parseInt(limit), offset);
+    let paginationSql = '';
+    if (limitNumber) {
+      values.push(limitNumber, offset);
+      paginationSql = `LIMIT $${idx} OFFSET $${idx + 1}`;
+    }
+
     const result = await pool.query(
       `SELECT
          m.movie_id,
@@ -68,22 +85,36 @@ router.get('/', async (req, res) => {
            json_agg(DISTINCT jsonb_build_object('genre_id', g.genre_id, 'genre_name', g.genre_name))
            FILTER (WHERE g.genre_id IS NOT NULL),
            '[]'
-         ) AS genres
+         ) AS genres,
+         COALESCE(
+           json_agg(DISTINCT jsonb_build_object('actor_id', a.actor_id, 'actor_name', a.actor_name))
+           FILTER (WHERE a.actor_id IS NOT NULL),
+           '[]'
+         ) AS actors,
+         COALESCE(
+           json_agg(DISTINCT jsonb_build_object('author_id', au.author_id, 'author_name', au.author_name))
+           FILTER (WHERE au.author_id IS NOT NULL),
+           '[]'
+         ) AS authors
        FROM public.movies m
        LEFT JOIN public.movie_genre mg ON m.movie_id = mg.movie_id
        LEFT JOIN public.genre g ON mg.genre_id = g.genre_id
+       LEFT JOIN public.movie_actor ma ON m.movie_id = ma.movie_id
+       LEFT JOIN public.actor a ON ma.actor_id = a.actor_id
+       LEFT JOIN public.movie_author mau ON m.movie_id = mau.movie_id
+       LEFT JOIN public.author au ON mau.author_id = au.author_id
        ${where}
        GROUP BY m.movie_id
        ORDER BY m.movie_id DESC
-       LIMIT $${idx} OFFSET $${idx + 1}`,
+       ${paginationSql}`,
       values
     );
 
     res.json({
       success: true,
       total,
-      page: parseInt(page),
-      totalPages: Math.ceil(total / parseInt(limit)),
+      page: pageNumber,
+      totalPages: limitNumber ? Math.ceil(total / limitNumber) : 1,
       data: result.rows,
     });
   } catch (err) {
@@ -95,6 +126,26 @@ router.get('/', async (req, res) => {
 // ─────────────────────────────────────────────
 // GET /api/movies/:id
 // ─────────────────────────────────────────────
+router.get('/actors/all', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT actor_id, actor_name FROM public.actor ORDER BY actor_name');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    console.error('Get actors error:', err.message);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
+  }
+});
+
+router.get('/authors/all', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT author_id, author_name FROM public.author ORDER BY author_name');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    console.error('Get authors error:', err.message);
+    res.status(500).json({ success: false, message: 'เน€เธเธดเธ”เธเนเธญเธเธดเธ”เธเธฅเธฒเธ”เนเธเธฃเธฐเธเธ' });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const result = await pool.query(
@@ -131,7 +182,7 @@ router.get('/:id', async (req, res) => {
 // genre_ids: comma-separated string "1,2,3"
 // ─────────────────────────────────────────────
 router.post('/', authMiddleware, upload.single('poster'), async (req, res) => {
-  const { movie_name, movie_cost, movie_rating, movie_releasedate, genre_ids, poster_url, detail } = req.body;
+  const { movie_name, movie_cost, movie_rating, movie_releasedate, genre_ids, actor_ids, author_ids, poster_url, detail } = req.body;
 
   if (!movie_name || !movie_cost || !movie_releasedate) {
     return res.status(400).json({ success: false, message: 'movie_name, movie_cost, movie_releasedate เป็นข้อมูลที่จำเป็น' });
@@ -155,16 +206,28 @@ router.post('/', authMiddleware, upload.single('poster'), async (req, res) => {
 
     // เพิ่ม genres ถ้ามี
     if (genre_ids) {
-      let ids = [];
-      if (Array.isArray(genre_ids)) {
-        ids = genre_ids.map(id => parseInt(id)).filter(Boolean);
-      } else if (typeof genre_ids === 'string') {
-        ids = genre_ids.split(',').map(id => parseInt(id.trim())).filter(Boolean);
-      }
-      for (const gid of ids) {
+      for (const gid of parseIds(genre_ids)) {
         await client.query(
           'INSERT INTO public.movie_genre (movie_id, genre_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
           [newMovie.movie_id, gid]
+        );
+      }
+    }
+
+    if (actor_ids) {
+      for (const aid of parseIds(actor_ids)) {
+        await client.query(
+          'INSERT INTO public.movie_actor (movie_id, actor_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+          [newMovie.movie_id, aid]
+        );
+      }
+    }
+
+    if (author_ids) {
+      for (const aid of parseIds(author_ids)) {
+        await client.query(
+          'INSERT INTO public.movie_author (movie_id, author_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+          [newMovie.movie_id, aid]
         );
       }
     }
@@ -184,7 +247,7 @@ router.post('/', authMiddleware, upload.single('poster'), async (req, res) => {
 // PUT /api/movies/:id
 // ─────────────────────────────────────────────
 router.put('/:id', authMiddleware, upload.single('poster'), async (req, res) => {
-  const { movie_name, movie_cost, movie_rating, movie_releasedate, genre_ids, poster_url, detail } = req.body;
+  const { movie_name, movie_cost, movie_rating, movie_releasedate, genre_ids, actor_ids, author_ids, poster_url, detail } = req.body;
 
   const client = await pool.connect();
   try {
@@ -223,16 +286,30 @@ router.put('/:id', authMiddleware, upload.single('poster'), async (req, res) => 
     // อัปเดต genres ถ้ามี genre_ids ส่งมา
     if (genre_ids !== undefined) {
       await client.query('DELETE FROM public.movie_genre WHERE movie_id = $1', [req.params.id]);
-      let ids = [];
-      if (Array.isArray(genre_ids)) {
-        ids = genre_ids.map(id => parseInt(id)).filter(Boolean);
-      } else if (typeof genre_ids === 'string') {
-        ids = genre_ids.split(',').map(id => parseInt(id.trim())).filter(Boolean);
-      }
-      for (const gid of ids) {
+      for (const gid of parseIds(genre_ids)) {
         await client.query(
           'INSERT INTO public.movie_genre (movie_id, genre_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
           [req.params.id, gid]
+        );
+      }
+    }
+
+    if (actor_ids !== undefined) {
+      await client.query('DELETE FROM public.movie_actor WHERE movie_id = $1', [req.params.id]);
+      for (const aid of parseIds(actor_ids)) {
+        await client.query(
+          'INSERT INTO public.movie_actor (movie_id, actor_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+          [req.params.id, aid]
+        );
+      }
+    }
+
+    if (author_ids !== undefined) {
+      await client.query('DELETE FROM public.movie_author WHERE movie_id = $1', [req.params.id]);
+      for (const aid of parseIds(author_ids)) {
+        await client.query(
+          'INSERT INTO public.movie_author (movie_id, author_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+          [req.params.id, aid]
         );
       }
     }
