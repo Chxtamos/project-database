@@ -10,7 +10,7 @@ const API_BASE = 'http://localhost:5000/api';
 const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { cart, cartMovies, fetchCart } = useApp();
+  const { cart, cartMovies, fetchCart, checkout: resetCart } = useApp();
 
   // Amount comes from cart total via navigation state or context
   const total = location.state?.total ?? cartMovies.reduce((s, m) => s + parseFloat(m.movie_cost || 0), 0);
@@ -68,6 +68,8 @@ const Checkout = () => {
       const data = await res.json();
       if (data.success) {
         setSuccess(true);
+        // Reset cart state so user gets a fresh cart for next purchase
+        await resetCart();
       } else {
         setError(data.message || 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
       }

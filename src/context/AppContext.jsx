@@ -99,10 +99,11 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const checkout = () => {
-    // Temporary checkout placeholder
-    setLibrary(prev => [...new Set([...prev, ...cartMovies.map(item => item.movie_id)])]);
+  const checkout = async () => {
+    // Clear local cart state and re-fetch to get a fresh cart
     setCartMovies([]);
+    setCart(null);
+    await fetchCart();
   };
 
   const addReview = (review) => {

@@ -37,10 +37,31 @@ router.post('/', authMiddleware, upload.single('slip'), async (req, res) => {
     });
   }
 
-  const slip_image = `/uploads/slips/${req.file.filename}`;
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+
+    // 0. ตรวจสอบว่า cart มี movies อยู่จริง
+    const cartMoviesCheck = await client.query(
+      `SELECT COUNT(*) FROM public.cart_movies WHERE cart_id = $1`,
+      [cart_id]
+    );
+    if (parseInt(cartMoviesCheck.rows[0].count) === 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ success: false, message: 'ไม่มีสินค้าใน cart กรุณาเพิ่มหนังก่อน checkout' });
+    }
+
+    // 0b. ตรวจสอบว่า cart นี้ยังไม่มี payment pending อยู่
+    const pendingCheck = await client.query(
+      `SELECT payment_id FROM public.payment WHERE cart_id = $1 AND status = 0`,
+      [cart_id]
+    );
+    if (pendingCheck.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ success: false, message: 'cart นี้มีการชำระเงินที่รอการยืนยันอยู่แล้ว กรุณารอ Admin ตรวจสอบ' });
+    }
+
+    const slip_image = `/uploads/slips/${req.file.filename}`;
 
     // 1. Insert transfer_slip
     const slipResult = await client.query(
