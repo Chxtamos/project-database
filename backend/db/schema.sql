@@ -417,6 +417,7 @@ ALTER TABLE ONLY "public"."report_review" ADD CONSTRAINT "report_review_review_i
 
 ALTER TABLE ONLY "public"."review" ADD CONSTRAINT "review_movie_id_fkey" FOREIGN KEY (movie_id) REFERENCES movies(movie_id) ON DELETE CASCADE;
 ALTER TABLE ONLY "public"."review" ADD CONSTRAINT "review_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;
+CREATE UNIQUE INDEX "review_one_per_user_movie" ON "public"."review" USING btree ("user_id", "movie_id");
 
 ALTER TABLE ONLY "public"."transfer_slip" ADD CONSTRAINT "transfer_slip_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(user_id);
 

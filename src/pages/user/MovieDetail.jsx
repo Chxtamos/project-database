@@ -26,6 +26,9 @@ const MovieDetail = () => {
   const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
   
   const isOwned = movie && library.some(movieId => Number(movieId) === Number(movie.movie_id));
+  const hasReviewed = Boolean(
+    currentUser && reviews.some(r => Number(r.user_id) === Number(currentUser.user_id))
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -80,6 +83,11 @@ const MovieDetail = () => {
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       if (!user) return alert("Please login first");
+      if (hasReviewed) {
+        setIsReviewOpen(false);
+        setCartNotice('คุณเขียน review หนังเรื่องนี้แล้ว');
+        return;
+      }
       if (!isOwned) {
         setIsReviewOpen(false);
         setCartNotice('ท่านยังไม่เป็นเจ้าของหนังเรื่องนี้');
@@ -215,7 +223,7 @@ const MovieDetail = () => {
             {!isOwned ? (
               <button 
                 onClick={handleAddToCart}
-                className="mt-4 px-8 py-4 bg-figma-blue text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95 flex items-center justify-center gap-2"
+                className="mt-4 px-8 py-4 bg-figma-blue text-white font-bold rounded-2xl hover:bg-emerald-600 hover:shadow-emerald-200 transition-all shadow-lg shadow-blue-200 active:scale-95 flex items-center justify-center gap-2"
               >
                 <ShoppingCart size={20} /> Add to Cart - ฿{parseFloat(movie.movie_cost || 0).toFixed(2)}
               </button>
@@ -224,17 +232,13 @@ const MovieDetail = () => {
                 <button
                   type="button"
                   onClick={() => navigate(`/user/watch/${movie.movie_id}`)}
-                  className="px-8 py-4 bg-figma-blue text-white font-bold rounded-2xl hover:bg-blue-700 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
+                  className="px-8 py-4 bg-figma-blue text-white font-bold rounded-2xl hover:bg-indigo-700 hover:shadow-indigo-200 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
                 >
                   <Play size={20} fill="currentColor" /> Watch Movie
                 </button>
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                className="px-8 py-4 bg-green-50 text-green-700 font-bold rounded-2xl border border-green-200 hover:bg-green-100 transition-all active:scale-95 flex items-center justify-center gap-2"
-              >
-                <Check size={20} /> คุณเป็นเจ้าของเรื่องนี้แล้ว
-              </button>
+                <div className="px-8 py-4 bg-green-50 text-green-700 font-bold rounded-2xl border border-green-200 flex items-center justify-center gap-2">
+                  <Check size={20} /> คุณเป็นเจ้าของเรื่องนี้แล้ว
+                </div>
               </div>
             )}
           </div>
@@ -244,15 +248,21 @@ const MovieDetail = () => {
               <h2 className="text-2xl font-black text-gray-900">User Reviews</h2>
               <button
                 onClick={() => {
-                  if (isOwned) {
+                  if (hasReviewed) {
+                    setCartNotice('คุณเขียน review หนังเรื่องนี้แล้ว');
+                  } else if (isOwned) {
                     setIsReviewOpen(true);
                   } else {
                     setCartNotice('ท่านยังไม่เป็นเจ้าของหนังเรื่องนี้');
                   }
                 }}
-                className="px-4 py-2 bg-gray-50 text-figma-blue font-bold text-sm rounded-xl hover:bg-blue-50 transition-colors flex items-center gap-2"
+                className={`px-4 py-2 font-bold text-sm rounded-xl transition-colors flex items-center gap-2 ${
+                  hasReviewed
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-gray-50 text-figma-blue hover:bg-blue-50'
+                }`}
               >
-                <Star size={16} /> Write a Review
+                <Star size={16} /> {hasReviewed ? 'Reviewed' : 'Write a Review'}
               </button>
             </div>
             <div className="space-y-4">

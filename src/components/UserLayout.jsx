@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, User, Search } from 'lucide-react';
+import { ShoppingCart, User, Search, X } from 'lucide-react';
 
 import { useApp } from '../context/AppContext';
 
-const UserLayout = ({ children, pageTitle }) => {
+const UserLayout = ({ children, pageTitle, searchValue = '', onSearchChange, searchPlaceholder = 'Search movies...' }) => {
   const { cartMovies } = useApp();
 
   const userStr = localStorage.getItem('user');
@@ -29,9 +29,21 @@ const UserLayout = ({ children, pageTitle }) => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 <input 
                   type="text" 
-                  placeholder="Search movies..." 
+                  placeholder={searchPlaceholder}
+                  value={searchValue}
+                  onChange={(e) => onSearchChange?.(e.target.value)}
                   className="pl-9 pr-4 py-1.5 bg-gray-100 border-none rounded-full text-sm focus:ring-2 focus:ring-figma-blue outline-none w-64 transition-all" 
                 />
+                {searchValue && onSearchChange && (
+                  <button
+                    type="button"
+                    onClick={() => onSearchChange('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                    title="Clear search"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </div>
               <Link to="/user/cart" className="p-2 text-gray-600 hover:bg-gray-100 rounded-full relative transition-colors">
                 <ShoppingCart size={20} />

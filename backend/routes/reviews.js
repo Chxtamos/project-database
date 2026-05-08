@@ -170,7 +170,8 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // Body: user_id, movie_id, review_number, rating, comment
 // ─────────────────────────────────────────────
 router.post('/', authMiddleware, async (req, res) => {
-  const { user_id, movie_id, review_number, rating, comment } = req.body;
+  const { movie_id, review_number, rating, comment } = req.body;
+  const user_id = req.user?.id;
 
   if (!user_id || !movie_id || !review_number || !rating) {
     return res.status(400).json({ success: false, message: 'user_id, movie_id, review_number, rating เป็นข้อมูลที่จำเป็น' });
@@ -191,6 +192,15 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(403).json({ success: false, message: 'ท่านยังไม่เป็นเจ้าของหนังเรื่องนี้' });
     }
 
+    const existingReview = await pool.query(
+      'SELECT review_id FROM public.review WHERE user_id = $1 AND movie_id = $2 LIMIT 1',
+      [user_id, movie_id]
+    );
+
+    if (existingReview.rows.length > 0) {
+      return res.status(409).json({ success: false, message: 'คุณเขียน review หนังเรื่องนี้แล้ว' });
+    }
+
     const result = await pool.query(
       `INSERT INTO public.review (user_id, movie_id, review_number, rating, comment)
        VALUES ($1, $2, $3, $4, $5)
@@ -200,6 +210,9 @@ router.post('/', authMiddleware, async (req, res) => {
     await refreshMovieRating(pool, movie_id);
     res.status(201).json({ success: true, message: 'เพิ่มรีวิวสำเร็จ', data: result.rows[0] });
   } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ success: false, message: 'คุณเขียน review หนังเรื่องนี้แล้ว' });
+    }
     console.error('Create review error:', err.message);
     res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
   }
