@@ -76,7 +76,7 @@ router.get('/top-movies', authMiddleware, async (req, res) => {
        LEFT JOIN public.movie_genre mg ON m.movie_id = mg.movie_id
        LEFT JOIN public.genre g        ON mg.genre_id = g.genre_id
        GROUP BY m.movie_id
-       ORDER BY review_count DESC, avg_review_rating DESC NULLS LAST
+       ORDER BY m.movie_rating DESC NULLS LAST, review_count DESC, m.movie_id DESC
        LIMIT $1`,
       [parseInt(limit)]
     );

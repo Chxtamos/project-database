@@ -39,11 +39,11 @@ router.get('/:user_id', authMiddleware, async (req, res) => {
 router.get('/:playlist_id/movies', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT m.*
+      `SELECT m.*, pm.sort_order
        FROM public.playlist_movie pm
        JOIN public.movies m ON pm.movie_id = m.movie_id
        WHERE pm.playlist_id = $1
-       ORDER BY m.movie_id`,
+       ORDER BY COALESCE(pm.sort_order, 2147483647), m.movie_id`,
       [req.params.playlist_id]
     );
     res.json({ success: true, data: result.rows });
@@ -120,7 +120,13 @@ router.post('/:playlist_id/movies', authMiddleware, async (req, res) => {
   }
   try {
     await pool.query(
-      'INSERT INTO public.playlist_movie (playlist_id, movie_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+      `INSERT INTO public.playlist_movie (playlist_id, movie_id, sort_order)
+       VALUES (
+         $1,
+         $2,
+         COALESCE((SELECT MAX(sort_order) + 1 FROM public.playlist_movie WHERE playlist_id = $1), 1)
+       )
+       ON CONFLICT DO NOTHING`,
       [req.params.playlist_id, movie_id]
     );
     res.json({ success: true, message: 'เพิ่มหนังเข้า playlist สำเร็จ' });
@@ -174,10 +180,10 @@ router.put('/:playlist_id/movies/sync', authMiddleware, async (req, res) => {
       [req.params.playlist_id]
     );
     // เพิ่มหนังใหม่ทั้งหมด
-    for (const movie_id of movie_ids) {
+    for (let index = 0; index < movie_ids.length; index += 1) {
       await client.query(
-        'INSERT INTO public.playlist_movie (playlist_id, movie_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-        [req.params.playlist_id, movie_id]
+        'INSERT INTO public.playlist_movie (playlist_id, movie_id, sort_order) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING',
+        [req.params.playlist_id, movie_ids[index], index + 1]
       );
     }
     await client.query('COMMIT');

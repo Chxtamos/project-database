@@ -287,6 +287,7 @@ DROP TABLE IF EXISTS "playlist_movie";
 CREATE TABLE "public"."playlist_movie" (
     "playlist_id" integer NOT NULL,
     "movie_id" integer NOT NULL,
+    "sort_order" integer,
     CONSTRAINT "playlist_movie_pkey" PRIMARY KEY ("playlist_id", "movie_id")
 )
 WITH (oids = false);

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import UserLayout from '../../components/UserLayout';
 import {
   ArrowLeft, Search, CheckSquare, Square, Save, Loader2,
-  BookOpen, ListMusic, Check, Film, Pencil, X
+  BookOpen, ListMusic, Check, Film, Pencil, X, ArrowUp, ArrowDown
 } from 'lucide-react';
 
 const API_BASE = 'http://localhost:5000/api';
@@ -15,6 +15,7 @@ const PlaylistEditor = () => {
   const [playlist, setPlaylist] = useState(null);
   const [libraryMovies, setLibraryMovies] = useState([]);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [selectedOrder, setSelectedOrder] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -54,7 +55,9 @@ const PlaylistEditor = () => {
       }
 
       if (plMoviesData.success) {
-        setSelectedIds(new Set(plMoviesData.data.map(m => m.movie_id)));
+        const orderedIds = plMoviesData.data.map(m => m.movie_id);
+        setSelectedIds(new Set(orderedIds));
+        setSelectedOrder(orderedIds);
       }
     } catch (err) {
       console.error('Fetch error:', err);
@@ -68,10 +71,30 @@ const PlaylistEditor = () => {
   // ─── Toggle เลือก/ยกเลิก movie ───
   const toggle = (movieId) => {
     setSaved(false);
+    const isSelected = selectedIds.has(movieId);
+
     setSelectedIds(prev => {
       const next = new Set(prev);
-      if (next.has(movieId)) next.delete(movieId);
+      if (isSelected) next.delete(movieId);
       else next.add(movieId);
+      return next;
+    });
+
+    setSelectedOrder(order => (
+      isSelected
+        ? order.filter(id => id !== movieId)
+        : order.includes(movieId) ? order : [...order, movieId]
+    ));
+  };
+
+  const moveSelected = (movieId, direction) => {
+    setSaved(false);
+    setSelectedOrder(order => {
+      const index = order.indexOf(movieId);
+      const nextIndex = index + direction;
+      if (index < 0 || nextIndex < 0 || nextIndex >= order.length) return order;
+      const next = [...order];
+      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
       return next;
     });
   };
@@ -80,8 +103,11 @@ const PlaylistEditor = () => {
   const toggleAll = () => {
     if (selectedIds.size === libraryMovies.length) {
       setSelectedIds(new Set());
+      setSelectedOrder([]);
     } else {
-      setSelectedIds(new Set(libraryMovies.map(m => m.movie_id)));
+      const allIds = libraryMovies.map(m => m.movie_id);
+      setSelectedIds(new Set(allIds));
+      setSelectedOrder(allIds);
     }
     setSaved(false);
   };
@@ -97,7 +123,7 @@ const PlaylistEditor = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ movie_ids: [...selectedIds] })
+        body: JSON.stringify({ movie_ids: [...new Set(selectedOrder)] })
       });
       const data = await res.json();
       if (data.success) {
@@ -119,6 +145,10 @@ const PlaylistEditor = () => {
   const filtered = libraryMovies.filter(m =>
     m.movie_name?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const selectedMovies = selectedOrder
+    .map(movieId => libraryMovies.find(movie => movie.movie_id === movieId))
+    .filter(Boolean);
 
   const getPosterSrc = (path) => {
     if (!path) return 'https://via.placeholder.com/80x120?text=?';
@@ -313,7 +343,7 @@ const PlaylistEditor = () => {
             </p>
             {selectedIds.size > 0 && (
               <button
-                onClick={() => { setSelectedIds(new Set()); setSaved(false); }}
+                onClick={() => { setSelectedIds(new Set()); setSelectedOrder([]); setSaved(false); }}
                 className="ml-auto text-xs text-blue-500 hover:text-blue-700 font-bold underline underline-offset-2"
               >
                 ล้างทั้งหมด
@@ -322,6 +352,61 @@ const PlaylistEditor = () => {
           </div>
 
           {/* ─── Movie Grid ─── */}
+          {selectedMovies.length > 0 && (
+            <div className="mb-6 bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-black text-gray-900">ลำดับใน Playlist</h2>
+                  <p className="text-xs text-gray-400">ขยับขึ้นลงเพื่อจัดเรียงเป็น 1, 2, 3, 4 ก่อนบันทึก</p>
+                </div>
+                <span className="text-xs font-bold text-figma-blue bg-blue-50 px-3 py-1 rounded-full">
+                  {selectedMovies.length} เรื่อง
+                </span>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {selectedMovies.map((movie, index) => (
+                  <div key={movie.movie_id} className="flex items-center gap-3 px-4 py-3">
+                    <div className="w-8 h-8 rounded-full bg-figma-blue text-white flex items-center justify-center text-sm font-black">
+                      {index + 1}
+                    </div>
+                    <img src={getPosterSrc(movie.movie_poster)} alt={movie.movie_name} className="w-10 h-14 object-cover rounded-lg bg-gray-100" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-gray-900 truncate">{movie.movie_name}</p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => moveSelected(movie.movie_id, -1)}
+                        disabled={index === 0}
+                        className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:text-figma-blue hover:border-blue-200 disabled:opacity-30 disabled:hover:text-gray-500 disabled:hover:border-gray-200"
+                        title="เลื่อนขึ้น"
+                      >
+                        <ArrowUp size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveSelected(movie.movie_id, 1)}
+                        disabled={index === selectedMovies.length - 1}
+                        className="p-2 rounded-lg border border-gray-200 text-gray-500 hover:text-figma-blue hover:border-blue-200 disabled:opacity-30 disabled:hover:text-gray-500 disabled:hover:border-gray-200"
+                        title="เลื่อนลง"
+                      >
+                        <ArrowDown size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggle(movie.movie_id)}
+                        className="p-2 rounded-lg border border-red-100 bg-red-50 text-red-500 hover:bg-red-100"
+                        title="เอาออกจาก playlist"
+                      >
+                        <X size={15} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {filtered.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
               <Search size={40} className="mx-auto mb-3 text-gray-200" />
@@ -331,6 +416,7 @@ const PlaylistEditor = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {filtered.map(movie => {
                 const isSelected = selectedIds.has(movie.movie_id);
+                const orderNumber = selectedOrder.indexOf(movie.movie_id) + 1;
                 return (
                   <button
                     key={movie.movie_id}
@@ -363,6 +449,11 @@ const PlaylistEditor = () => {
                       }`}>
                         {isSelected ? <Check size={14} strokeWidth={3} /> : <Square size={14} />}
                       </div>
+                      {isSelected && (
+                        <div className="absolute top-2 left-2 w-7 h-7 rounded-full bg-white text-figma-blue flex items-center justify-center text-xs font-black shadow-lg">
+                          {orderNumber}
+                        </div>
+                      )}
                     </div>
 
                     {/* Movie name */}
