@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import UserLayout from '../../components/UserLayout';
-import { Heart, Loader2, BookOpen } from 'lucide-react';
+import { Heart, Loader2, BookOpen, Play } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE = 'http://localhost:5000/api';
 
 const Library = () => {
+  const navigate = useNavigate();
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -73,7 +75,14 @@ const Library = () => {
                   alt={movie.movie_name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                 />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => navigate(`/user/watch/${movie.movie_id}`)}
+                    className="p-3 rounded-full bg-figma-blue text-white shadow-xl hover:scale-110 transition-transform"
+                    title="Watch movie"
+                  >
+                    <Play size={20} fill="currentColor" />
+                  </button>
                   <button
                     onClick={() => toggleFavorite(movie.library_id)}
                     className={`p-2 rounded-full shadow-xl hover:scale-110 transition-transform ${

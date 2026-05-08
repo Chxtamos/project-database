@@ -63,7 +63,7 @@ const Cart = () => {
                 <img src={getPosterSrc(item.movie_poster)} className="w-16 h-20 object-cover rounded-lg flex-shrink-0" alt={item.movie_name} />
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold truncate">{item.movie_name}</h3>
-                  <p className="text-figma-blue font-bold">${parseFloat(item.movie_cost || 0).toFixed(2)}</p>
+                  <p className="text-figma-blue font-bold">฿{parseFloat(item.movie_cost || 0).toFixed(2)}</p>
                 </div>
                 <button
                   onClick={() => removeFromCart(item.movie_id)}
@@ -87,7 +87,7 @@ const Cart = () => {
               {cartMovies.map(item => (
                 <div key={item.movie_id} className="flex justify-between text-xs text-gray-500">
                   <span className="truncate max-w-[160px]">{item.movie_name}</span>
-                  <span className="font-medium">${parseFloat(item.movie_cost || 0).toFixed(2)}</span>
+                  <span className="font-medium">฿{parseFloat(item.movie_cost || 0).toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -96,15 +96,11 @@ const Cart = () => {
           <div className="space-y-2 mb-6">
             <div className="flex justify-between text-gray-600 text-sm">
               <span>Subtotal ({cartMovies.length} {cartMovies.length === 1 ? 'item' : 'items'})</span>
-              <span>${total.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-gray-600 text-sm">
-              <span>Tax (0%)</span>
-              <span>$0.00</span>
+              <span>฿{total.toFixed(2)}</span>
             </div>
             <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-100">
               <span>Total</span>
-              <span className="text-figma-blue">${total.toFixed(2)}</span>
+              <span className="text-figma-blue">฿{total.toFixed(2)}</span>
             </div>
           </div>
 
@@ -121,11 +117,11 @@ const Cart = () => {
             disabled={cartMovies.length === 0 || hasPending || checkingPending}
             className="w-full py-4 bg-figma-blue text-white font-bold rounded-2xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-200 disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed"
           >
-            {hasPending ? '⏳ รอการยืนยัน' : `Checkout Now — $${total.toFixed(2)}`}
+            {hasPending ? '⏳ รอการยืนยัน' : `Checkout Now — ฿${total.toFixed(2)}`}
           </button>
 
           <p className="text-center text-xs text-gray-400 mt-3">
-            ชำระเงินสำหรับ {cartMovies.length} รายการพร้อมกัน
+            ชำระเงินสำหรับ {cartMovies.length} รายการ
           </p>
         </div>
       </div>

@@ -158,7 +158,7 @@ const Checkout = () => {
 
             <div className="text-center mb-4">
               <p className="text-sm text-gray-400 mb-1">ยอดที่ต้องชำระ</p>
-              <p className="text-4xl font-black text-figma-blue">${total.toFixed(2)}</p>
+              <p className="text-4xl font-black text-figma-blue">฿{total.toFixed(2)}</p>
             </div>
 
             <div className="w-full bg-gray-50 rounded-2xl p-4 space-y-2 text-sm text-gray-500 mt-2">
@@ -169,12 +169,12 @@ const Checkout = () => {
               {cartMovies.map(m => (
                 <div key={m.movie_id} className="flex justify-between text-xs">
                   <span className="truncate max-w-[160px]">{m.movie_name}</span>
-                  <span>${parseFloat(m.movie_cost || 0).toFixed(2)}</span>
+                  <span>฿{parseFloat(m.movie_cost || 0).toFixed(2)}</span>
                 </div>
               ))}
               <div className="border-t border-gray-200 pt-2 flex justify-between font-bold text-gray-800">
                 <span>รวมทั้งสิ้น</span>
-                <span className="text-figma-blue">${total.toFixed(2)}</span>
+                <span className="text-figma-blue">฿{total.toFixed(2)}</span>
               </div>
             </div>
           </div>

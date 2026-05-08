@@ -214,6 +214,7 @@ CREATE TABLE "public"."movies" (
     "movie_rating" integer,
     "movie_releasedate" date NOT NULL,
     "movie_poster" text DEFAULT 'https://example.com/default-poster.png' NOT NULL,
+    "video_url" text,
     CONSTRAINT "movies_pkey" PRIMARY KEY ("movie_id")
 )
 WITH (oids = false);

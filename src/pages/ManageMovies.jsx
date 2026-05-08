@@ -20,7 +20,7 @@ const ManageMovies = () => {
   const [authors, setAuthors] = useState([]);
 
   const [formData, setFormData] = useState({ 
-    movie_id: '', movie_name: '', genre_ids: [], actor_ids: [], author_ids: [], movie_cost: '', movie_releasedate: '', status: 'Published', poster_url: '', detail: ''
+    movie_id: '', movie_name: '', genre_ids: [], actor_ids: [], author_ids: [], movie_cost: '', movie_releasedate: '', status: 'Published', poster_url: '', video_url: '', detail: ''
   });
 
   const fetchMovies = async () => {
@@ -80,6 +80,7 @@ const ManageMovies = () => {
       genre_ids: movie.genres ? movie.genres.map(g => g.genre_id) : [],
       actor_ids: movie.actors ? movie.actors.map(a => a.actor_id) : [],
       author_ids: movie.authors ? movie.authors.map(a => a.author_id) : [],
+      video_url: movie.video_url || '',
       detail: movie.detail || ''
     });
     const posterSrc = movie.movie_poster 
@@ -119,6 +120,7 @@ const ManageMovies = () => {
     data.append('genre_ids', formData.genre_ids.join(','));
     data.append('actor_ids', formData.actor_ids.join(','));
     data.append('author_ids', formData.author_ids.join(','));
+    data.append('video_url', formData.video_url || '');
     data.append('detail', formData.detail);
     if (formData.poster_url) data.append('poster_url', formData.poster_url);
     if (imageFile) data.append('poster', imageFile);
@@ -242,7 +244,7 @@ const ManageMovies = () => {
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" 
             />
           </div>
-          <button onClick={() => { setUploadingImage(null); setFormData({ movie_name: '', genre_ids: [], actor_ids: [], author_ids: [], movie_cost: '', movie_releasedate: new Date().toISOString().split('T')[0], status: 'Published', poster_url: '', detail: '' }); setIsAddOpen(true); }} className="w-full sm:w-auto px-5 py-2.5 bg-figma-blue text-white rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-700 transition-all active:scale-95 shadow-sm">
+          <button onClick={() => { setUploadingImage(null); setFormData({ movie_name: '', genre_ids: [], actor_ids: [], author_ids: [], movie_cost: '', movie_releasedate: new Date().toISOString().split('T')[0], status: 'Published', poster_url: '', video_url: '', detail: '' }); setIsAddOpen(true); }} className="w-full sm:w-auto px-5 py-2.5 bg-figma-blue text-white rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-700 transition-all active:scale-95 shadow-sm">
             <Plus size={18} />
             Add New Movie
           </button>
@@ -289,7 +291,7 @@ const ManageMovies = () => {
                           <p className="text-xs text-gray-400 mt-1">Authors: {movie.authors.map(a => a.author_name).join(', ')}</p>
                         )}
                       </td>
-                      <td className="px-6 py-4 font-bold text-figma-blue">${movie.movie_cost}</td>
+                      <td className="px-6 py-4 font-bold text-figma-blue">฿{movie.movie_cost}</td>
                       <td className="px-6 py-4 text-gray-600 font-medium">{formatDate(movie.movie_releasedate)}</td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex justify-center gap-2">
@@ -350,7 +352,7 @@ const ManageMovies = () => {
               <input type="text" required value={formData.movie_name} onChange={e => setFormData({...formData, movie_name: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none text-sm" />
             </div>
             <div className="col-span-1 space-y-1.5">
-              <label className="text-sm font-bold text-gray-700">Cost ($)</label>
+              <label className="text-sm font-bold text-gray-700">Cost (฿)</label>
               <input type="number" step="0.01" required value={formData.movie_cost} onChange={e => setFormData({...formData, movie_cost: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none text-sm" />
             </div>
             <div className="col-span-1 space-y-1.5">
@@ -360,6 +362,16 @@ const ManageMovies = () => {
             <div className="col-span-2 space-y-1.5">
               <label className="text-sm font-bold text-gray-700">Synopsis (Detail)</label>
               <textarea rows="3" value={formData.detail} onChange={e => setFormData({...formData, detail: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none text-sm resize-none" placeholder="Movie synopsis..."></textarea>
+            </div>
+            <div className="col-span-2 space-y-1.5">
+              <label className="text-sm font-bold text-gray-700">Video Link</label>
+              <input
+                type="url"
+                value={formData.video_url}
+                onChange={e => setFormData({...formData, video_url: e.target.value})}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none text-sm"
+                placeholder="https://example.com/movie.mp4 or YouTube link"
+              />
             </div>
             <div className="col-span-2 space-y-1.5">
               <label className="text-sm font-bold text-gray-700">Genres</label>
@@ -439,7 +451,7 @@ const ManageMovies = () => {
                 <input type="text" required value={formData.movie_name} onChange={e => setFormData({...formData, movie_name: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none text-sm" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-bold text-gray-700">Cost ($)</label>
+                <label className="text-sm font-bold text-gray-700">Cost (฿)</label>
                 <input type="number" step="0.01" required value={formData.movie_cost} onChange={e => setFormData({...formData, movie_cost: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none text-sm" />
               </div>
               <div className="space-y-1.5">
@@ -449,6 +461,16 @@ const ManageMovies = () => {
               <div className="md:col-span-2 space-y-1.5">
                 <label className="text-sm font-bold text-gray-700">Synopsis (Detail)</label>
                 <textarea rows="3" value={formData.detail} onChange={e => setFormData({...formData, detail: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none text-sm resize-none" placeholder="Movie synopsis..."></textarea>
+              </div>
+              <div className="md:col-span-2 space-y-1.5">
+                <label className="text-sm font-bold text-gray-700">Video Link</label>
+                <input
+                  type="url"
+                  value={formData.video_url}
+                  onChange={e => setFormData({...formData, video_url: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none text-sm"
+                  placeholder="https://example.com/movie.mp4 or YouTube link"
+                />
               </div>
               <div className="md:col-span-2 space-y-1.5">
                 <label className="text-sm font-bold text-gray-700">Genres</label>

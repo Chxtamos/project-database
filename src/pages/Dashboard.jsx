@@ -16,6 +16,18 @@ const Dashboard = () => {
     try {
       const token = localStorage.getItem('token');
 
+      // Fetch Overall Stats (for Total Users and Total Movies)
+      const statsRes = await fetch(`${API_BASE}/dashboard/stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const statsData = await statsRes.json();
+      if (statsData.success) {
+        setStats({
+          users: statsData.data.total_users || 0,
+          movies: statsData.data.total_movies || 0,
+        });
+      }
+
       // Fetch Movies (for Trending section)
       const movieRes = await fetch(`${API_BASE}/dashboard/top-movies?limit=5`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -24,12 +36,6 @@ const Dashboard = () => {
       if (movieData.success) {
         setTrendingMovies(movieData.data);
       }
-
-      // Fetch User Count (Requires token)
-      const userRes = await fetch(`${API_BASE}/users?limit=1`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const userData = await userRes.json();
       
       // Fetch Pending Payments
       const paymentRes = await fetch(`${API_BASE}/payments?status=0&limit=5`, {
@@ -40,10 +46,6 @@ const Dashboard = () => {
         setPendingPayments(paymentData.data);
       }
       
-      setStats({
-        users: userData.total || 0,
-        movies: movieData.total || 0,
-      });
       setLastUpdated(new Date());
     } catch (err) {
       console.error('Dashboard fetch error:', err);
@@ -57,8 +59,6 @@ const Dashboard = () => {
     const interval = setInterval(fetchData, 10000); // Polling every 10s
     return () => clearInterval(interval);
   }, []);
-
-  // Removed static pendingPayments array
 
   const getPosterSrc = (path) => {
     if (!path) return '';
@@ -125,7 +125,7 @@ const Dashboard = () => {
                         ? movie.genres.map(g => g.genre_name || g).slice(0, 1).join(', ')
                         : 'Movie'}
                     </span>
-                    <span className="text-sm font-bold text-figma-blue">{movie.movie_rating || 'N/A'} ★</span>
+                    <span className="text-sm font-bold text-yellow-500">{movie.movie_rating || 'N/A'} ★</span>
                   </div>
                 </div>
               </div>
@@ -160,7 +160,7 @@ const Dashboard = () => {
                   <tr key={pay.payment_id || idx} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 text-gray-600 font-medium">#{pay.payment_id}</td>
                     <td className="px-6 py-4 text-gray-600">{pay.username || pay.email}</td>
-                    <td className="px-6 py-4 text-gray-600">${parseFloat(pay.amount).toFixed(2)}</td>
+                    <td className="px-6 py-4 text-gray-600">฿{parseFloat(pay.amount).toFixed(2)}</td>
                     <td className="px-6 py-4 text-gray-600">{new Date(pay.payment_date).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
                       <span className="px-2 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-600">

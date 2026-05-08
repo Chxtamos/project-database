@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import UserLayout from '../../components/UserLayout';
 import Modal from '../../components/Modal';
 import ConfirmModal from '../../components/ConfirmModal';
-import { Star, Flag, Send, Loader2, ShoppingCart, Check, X } from 'lucide-react';
+import { Star, Flag, Send, Loader2, ShoppingCart, Check, X, Play } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 const API_BASE = 'http://localhost:5000/api';
 
 const MovieDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { addToCart, library } = useApp();
   const [movie, setMovie] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -216,16 +217,25 @@ const MovieDetail = () => {
                 onClick={handleAddToCart}
                 className="mt-4 px-8 py-4 bg-figma-blue text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95 flex items-center justify-center gap-2"
               >
-                <ShoppingCart size={20} /> Add to Cart - ${parseFloat(movie.movie_cost || 0).toFixed(2)}
+                <ShoppingCart size={20} /> Add to Cart - ฿{parseFloat(movie.movie_cost || 0).toFixed(2)}
               </button>
             ) : (
+              <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/user/watch/${movie.movie_id}`)}
+                  className="px-8 py-4 bg-figma-blue text-white font-bold rounded-2xl hover:bg-blue-700 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
+                >
+                  <Play size={20} fill="currentColor" /> Watch Movie
+                </button>
               <button
                 type="button"
                 onClick={handleAddToCart}
-                className="mt-4 px-8 py-4 bg-green-50 text-green-700 font-bold rounded-2xl border border-green-200 hover:bg-green-100 transition-all active:scale-95 flex items-center justify-center gap-2 w-full lg:w-max"
+                className="px-8 py-4 bg-green-50 text-green-700 font-bold rounded-2xl border border-green-200 hover:bg-green-100 transition-all active:scale-95 flex items-center justify-center gap-2"
               >
                 <Check size={20} /> คุณเป็นเจ้าของเรื่องนี้แล้ว
               </button>
+              </div>
             )}
           </div>
 

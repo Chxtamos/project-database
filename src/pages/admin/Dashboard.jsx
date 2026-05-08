@@ -21,7 +21,7 @@ const Dashboard = () => {
         <StatCard title="Total Users" value="1,284" icon={Users} color="bg-blue-500" />
         <StatCard title="Active Subscriptions" value="856" icon={TrendingUp} color="bg-green-500" />
         <StatCard title="Total Streams" value="42.5K" icon={PlayCircle} color="bg-purple-500" />
-        <StatCard title="Monthly Revenue" value="$12,450" icon={DollarSign} color="bg-orange-500" />
+        <StatCard title="Monthly Revenue" value="฿12,450" icon={DollarSign} color="bg-orange-500" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">

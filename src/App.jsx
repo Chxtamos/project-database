@@ -25,6 +25,8 @@ import Library from './pages/user/Library';
 import Playlists from './pages/user/Playlists';
 import Checkout from './pages/user/Checkout';
 import PlaylistEditor from './pages/user/PlaylistEditor';
+import VideoPlayer from './pages/user/VideoPlayer';
+import PlaylistWatchRedirect from './pages/user/PlaylistWatchRedirect';
 import Profile from './pages/user/Profile';
 
 function App() {
@@ -55,6 +57,8 @@ function App() {
           <Route path="/user/library" element={<Library />} />
           <Route path="/user/playlists" element={<Playlists />} />
           <Route path="/user/playlists/:id/edit" element={<PlaylistEditor />} />
+          <Route path="/user/playlists/:id/watch" element={<PlaylistWatchRedirect />} />
+          <Route path="/user/watch/:movieId" element={<VideoPlayer />} />
           <Route path="/user/profile" element={<Profile />} />
         </Routes>
       </Router>

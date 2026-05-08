@@ -16,7 +16,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
         SELECT
           COUNT(*) AS total_movies,
           ROUND(AVG(movie_rating)::numeric, 1) AS avg_rating
-        FROM public.movies WHERE movie_rating IS NOT NULL
+        FROM public.movies
       `),
       pool.query(`
         SELECT

@@ -11,9 +11,9 @@ const ManagePayments = () => {
   const [selectedId, setSelectedId] = useState(null);
 
   const payments = [
-    ["TXN001", "John Doe", "$12.99", "2026-05-01", "Completed"],
-    ["TXN002", "Jane Smith", "$12.99", "2026-05-02", "Pending"],
-    ["TXN003", "Bob Wilson", "$25.00", "2026-05-03", "Completed"],
+    ["TXN001", "John Doe", "฿12.99", "2026-05-01", "Completed"],
+    ["TXN002", "Jane Smith", "฿12.99", "2026-05-02", "Pending"],
+    ["TXN003", "Bob Wilson", "฿25.00", "2026-05-03", "Completed"],
   ];
 
   const handleEdit = (id) => {
@@ -94,7 +94,7 @@ const ManagePayments = () => {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Amount</label>
-            <input type="text" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" placeholder="e.g. $12.99" />
+            <input type="text" className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" placeholder="e.g. ฿12.99" />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Payment Date</label>

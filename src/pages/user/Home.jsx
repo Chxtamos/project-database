@@ -67,7 +67,7 @@ const Home = () => {
                 </div>
 
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
-                  <span className="text-figma-blue font-bold text-sm">${parseFloat(movie.movie_cost || 0).toFixed(2)}</span>
+                  <span className="text-figma-blue font-bold text-sm">฿{parseFloat(movie.movie_cost || 0).toFixed(2)}</span>
                   {!library.includes(movie.movie_id) ? (
                     <button 
                       onClick={(e) => { e.stopPropagation(); addToCart(movie.movie_id); }}

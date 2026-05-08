@@ -80,6 +80,7 @@ router.get('/', async (req, res) => {
          m.movie_rating,
          m.movie_releasedate,
          m.movie_poster,
+         m.video_url,
          m.detail,
          COALESCE(
            json_agg(DISTINCT jsonb_build_object('genre_id', g.genre_id, 'genre_name', g.genre_name))
@@ -182,7 +183,7 @@ router.get('/:id', async (req, res) => {
 // genre_ids: comma-separated string "1,2,3"
 // ─────────────────────────────────────────────
 router.post('/', authMiddleware, upload.single('poster'), async (req, res) => {
-  const { movie_name, movie_cost, movie_rating, movie_releasedate, genre_ids, actor_ids, author_ids, poster_url, detail } = req.body;
+  const { movie_name, movie_cost, movie_rating, movie_releasedate, genre_ids, actor_ids, author_ids, poster_url, video_url, detail } = req.body;
 
   if (!movie_name || !movie_cost || !movie_releasedate) {
     return res.status(400).json({ success: false, message: 'movie_name, movie_cost, movie_releasedate เป็นข้อมูลที่จำเป็น' });
@@ -197,10 +198,10 @@ router.post('/', authMiddleware, upload.single('poster'), async (req, res) => {
     await client.query('BEGIN');
 
     const movieResult = await client.query(
-      `INSERT INTO public.movies (movie_name, movie_cost, movie_rating, movie_releasedate, movie_poster, detail)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO public.movies (movie_name, movie_cost, movie_rating, movie_releasedate, movie_poster, video_url, detail)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [movie_name, parseFloat(movie_cost), movie_rating ? parseInt(movie_rating) : null, movie_releasedate, poster, detail || '-']
+      [movie_name, parseFloat(movie_cost), movie_rating ? parseInt(movie_rating) : null, movie_releasedate, poster, video_url || null, detail || '-']
     );
     const newMovie = movieResult.rows[0];
 
@@ -247,7 +248,7 @@ router.post('/', authMiddleware, upload.single('poster'), async (req, res) => {
 // PUT /api/movies/:id
 // ─────────────────────────────────────────────
 router.put('/:id', authMiddleware, upload.single('poster'), async (req, res) => {
-  const { movie_name, movie_cost, movie_rating, movie_releasedate, genre_ids, actor_ids, author_ids, poster_url, detail } = req.body;
+  const { movie_name, movie_cost, movie_rating, movie_releasedate, genre_ids, actor_ids, author_ids, poster_url, video_url, detail } = req.body;
 
   const client = await pool.connect();
   try {
@@ -269,8 +270,9 @@ router.put('/:id', authMiddleware, upload.single('poster'), async (req, res) => 
          movie_rating      = $3,
          movie_releasedate = $4,
          movie_poster      = $5,
-         detail            = $6
-       WHERE movie_id = $7
+         video_url         = $6,
+         detail            = $7
+       WHERE movie_id = $8
        RETURNING *`,
       [
         movie_name        ?? old.movie_name,
@@ -278,6 +280,7 @@ router.put('/:id', authMiddleware, upload.single('poster'), async (req, res) => 
         movie_rating      ? parseInt(movie_rating) : old.movie_rating,
         movie_releasedate ?? old.movie_releasedate,
         poster,
+        video_url !== undefined ? (video_url || null) : old.video_url,
         detail            ?? old.detail,
         req.params.id,
       ]

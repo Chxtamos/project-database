@@ -106,6 +106,14 @@ const Playlists = () => {
 
               {/* Action Buttons */}
               <div className="flex gap-2">
+                <button
+                  onClick={() => navigate(`/user/playlists/${pl.playlist_id}/watch`)}
+                  disabled={Number(pl.movie_count) === 0}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-figma-blue text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Play size={15} fill="currentColor" />
+                  Play
+                </button>
                 {/* ปุ่มจัดการหนัง (Edit Movies) */}
                 <button
                   onClick={() => navigate(`/user/playlists/${pl.playlist_id}/edit`)}

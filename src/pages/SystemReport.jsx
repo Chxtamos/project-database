@@ -5,8 +5,8 @@ import { Search, Filter, Download, FileText, FileSpreadsheet } from 'lucide-reac
 const SystemReport = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const reports = [
-    { metric: "Top 5 Trending Movies Now", value: "Neon Horizon, Silent Echoes, +3 others", trend: "+15,200 USD", status: "Trending" },
-    { metric: "Total Platform Revenue (YTD)", value: "$1,245,000", trend: "+15% YoY", status: "Excellent" },
+    { metric: "Top 5 Trending Movies Now", value: "Neon Horizon, Silent Echoes, +3 others", trend: "+15,200 THB", status: "Trending" },
+    { metric: "Total Platform Revenue (YTD)", value: "฿1,245,000", trend: "+15% YoY", status: "Excellent" },
     { metric: "Monthly Active Users (MAU)", value: "12,480 users", trend: "+8.5%", status: "Good" },
     { metric: "Total Subscriptions (Premium)", value: "4,250 (89% ratio)", trend: "+120 this week", status: "Growth" },
     { metric: "System Server Uptime", value: "99.98%", trend: "Stable", status: "Healthy" },

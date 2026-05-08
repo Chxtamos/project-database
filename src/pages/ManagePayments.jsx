@@ -173,7 +173,7 @@ const ManagePayments = () => {
                       <p className="font-medium text-gray-800">{pay.username}</p>
                       <p className="text-xs text-gray-400">{pay.email}</p>
                     </td>
-                    <td className="px-6 py-4 font-bold text-figma-blue">${parseFloat(pay.amount).toFixed(2)}</td>
+                    <td className="px-6 py-4 font-bold text-figma-blue">฿{parseFloat(pay.amount).toFixed(2)}</td>
                     <td className="px-6 py-4 text-gray-500 text-xs">
                       {pay.payment_date ? new Date(pay.payment_date).toLocaleString() : '-'}
                     </td>
@@ -260,7 +260,7 @@ const ManagePayments = () => {
               {[
                 { label: 'Payment ID', value: `#${selectedPayment.payment_id}` },
                 { label: 'Customer', value: `${selectedPayment.username} (${selectedPayment.email})` },
-                { label: 'Amount', value: `$${parseFloat(selectedPayment.amount).toFixed(2)}` },
+                { label: 'Amount', value: `฿${parseFloat(selectedPayment.amount).toFixed(2)}` },
                 { label: 'Payment Date', value: selectedPayment.payment_date ? new Date(selectedPayment.payment_date).toLocaleString() : '-' },
                 { label: 'Completed At', value: selectedPayment.completed_at ? new Date(selectedPayment.completed_at).toLocaleString() : '-' },
               ].map(({ label, value }) => (
