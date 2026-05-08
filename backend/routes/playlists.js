@@ -131,6 +131,67 @@ router.post('/:playlist_id/movies', authMiddleware, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────
+// PATCH /api/playlists/:playlist_id/rename
+// เปลี่ยนชื่อ playlist
+// Body: { playlist_name }
+// ─────────────────────────────────────────────
+router.patch('/:playlist_id/rename', authMiddleware, async (req, res) => {
+  const { playlist_name } = req.body;
+  if (!playlist_name || !playlist_name.trim()) {
+    return res.status(400).json({ success: false, message: 'กรุณาระบุชื่อ playlist' });
+  }
+  try {
+    const result = await pool.query(
+      'UPDATE public.playlist SET playlist_name = $1 WHERE playlist_id = $2 RETURNING *',
+      [playlist_name.trim(), req.params.playlist_id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'ไม่พบ playlist' });
+    }
+    res.json({ success: true, message: 'เปลี่ยนชื่อสำเร็จ', data: result.rows[0] });
+  } catch (err) {
+    console.error('Rename playlist error:', err.message);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
+  }
+});
+
+// ─────────────────────────────────────────────
+// PUT /api/playlists/:playlist_id/movies/sync
+// บันทึกหนังใน playlist ใหม่ทั้งหมด (replace)
+// Body: { movie_ids: [1, 2, 3, ...] }
+// ─────────────────────────────────────────────
+router.put('/:playlist_id/movies/sync', authMiddleware, async (req, res) => {
+  const { movie_ids } = req.body;
+  if (!Array.isArray(movie_ids)) {
+    return res.status(400).json({ success: false, message: 'movie_ids ต้องเป็น array' });
+  }
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // ลบหนังทั้งหมดใน playlist ก่อน
+    await client.query(
+      'DELETE FROM public.playlist_movie WHERE playlist_id = $1',
+      [req.params.playlist_id]
+    );
+    // เพิ่มหนังใหม่ทั้งหมด
+    for (const movie_id of movie_ids) {
+      await client.query(
+        'INSERT INTO public.playlist_movie (playlist_id, movie_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+        [req.params.playlist_id, movie_id]
+      );
+    }
+    await client.query('COMMIT');
+    res.json({ success: true, message: 'บันทึก playlist สำเร็จ', count: movie_ids.length });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Sync playlist movies error:', err.message);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
+  } finally {
+    client.release();
+  }
+});
+
+// ─────────────────────────────────────────────
 // DELETE /api/playlists/:playlist_id
 // ─────────────────────────────────────────────
 router.delete('/:playlist_id', authMiddleware, async (req, res) => {

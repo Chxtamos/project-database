@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import UserLayout from '../../components/UserLayout';
-import { Plus, Play, Trash2, Loader2, ListMusic } from 'lucide-react';
+import { Plus, Play, Trash2, Loader2, ListMusic, Pencil } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE = 'http://localhost:5000/api';
 
 const Playlists = () => {
+  const navigate = useNavigate();
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState('');
@@ -64,7 +66,7 @@ const Playlists = () => {
   };
 
   const deletePlaylist = async (playlistId) => {
-    if (!window.confirm('Delete this playlist?')) return;
+    if (!window.confirm('ลบ playlist นี้ใช่ไหม?')) return;
     const token = localStorage.getItem('token');
     try {
       await fetch(`${API_BASE}/playlists/${playlistId}`, {
@@ -87,33 +89,51 @@ const Playlists = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {playlists.map(pl => (
-            <div key={pl.playlist_id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-figma-blue transition-colors">
-              <div className="flex items-center gap-4">
+            <div
+              key={pl.playlist_id}
+              className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm hover:border-figma-blue hover:shadow-md transition-all group"
+            >
+              {/* ไอคอน + ชื่อ + จำนวนหนัง */}
+              <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 bg-figma-blue text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-100 flex-shrink-0">
                   <Play size={22} fill="currentColor" />
                 </div>
-                <div>
-                  <h3 className="font-bold text-lg">{pl.playlist_name}</h3>
-                  <p className="text-sm text-gray-400">{pl.movie_count} movies</p>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-lg truncate">{pl.playlist_name}</h3>
+                  <p className="text-sm text-gray-400">{pl.movie_count} เรื่อง</p>
                 </div>
               </div>
-              <button
-                onClick={() => deletePlaylist(pl.playlist_id)}
-                className="p-2 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                title="Delete playlist"
-              >
-                <Trash2 size={18} />
-              </button>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                {/* ปุ่มจัดการหนัง (Edit Movies) */}
+                <button
+                  onClick={() => navigate(`/user/playlists/${pl.playlist_id}/edit`)}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-figma-blue font-bold text-sm rounded-xl hover:bg-figma-blue hover:text-white transition-all active:scale-95"
+                >
+                  <Pencil size={15} />
+                  จัดการหนัง
+                </button>
+
+                {/* ปุ่มลบ */}
+                <button
+                  onClick={() => deletePlaylist(pl.playlist_id)}
+                  className="p-2.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                  title="ลบ playlist"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
             </div>
           ))}
 
-          {/* Create new playlist */}
+          {/* สร้าง playlist ใหม่ */}
           {showForm ? (
             <form onSubmit={createPlaylist} className="border-2 border-dashed border-figma-blue rounded-3xl p-6 flex flex-col gap-3">
               <input
                 type="text"
                 className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none text-sm"
-                placeholder="Playlist name..."
+                placeholder="ชื่อ Playlist..."
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 autoFocus
@@ -124,32 +144,32 @@ const Playlists = () => {
                   disabled={creating || !newName.trim()}
                   className="flex-1 py-2 bg-figma-blue text-white font-bold rounded-xl hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50 text-sm"
                 >
-                  {creating ? 'Creating...' : 'Create'}
+                  {creating ? 'กำลังสร้าง...' : 'สร้าง'}
                 </button>
                 <button
                   type="button"
                   onClick={() => { setShowForm(false); setNewName(''); }}
                   className="px-4 py-2 text-gray-500 font-medium hover:bg-gray-100 rounded-xl transition-colors text-sm"
                 >
-                  Cancel
+                  ยกเลิก
                 </button>
               </div>
             </form>
           ) : (
             <button
               onClick={() => setShowForm(true)}
-              className="border-2 border-dashed border-gray-200 rounded-3xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-figma-blue hover:text-figma-blue transition-all group"
+              className="border-2 border-dashed border-gray-200 rounded-3xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-figma-blue hover:text-figma-blue transition-all group min-h-[130px]"
             >
               <Plus size={32} className="mb-2 group-hover:scale-110 transition-transform" />
-              <span className="font-medium">Create New Playlist</span>
+              <span className="font-medium">สร้าง Playlist ใหม่</span>
             </button>
           )}
 
           {playlists.length === 0 && !showForm && (
             <div className="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
               <ListMusic size={48} className="mb-4 text-gray-200" />
-              <p className="font-semibold text-lg text-gray-500">No playlists yet</p>
-              <p className="text-sm mt-1">Create your first playlist to get started.</p>
+              <p className="font-semibold text-lg text-gray-500">ยังไม่มี Playlist</p>
+              <p className="text-sm mt-1">สร้าง Playlist แรกของคุณเพื่อเริ่มต้น</p>
             </div>
           )}
         </div>
