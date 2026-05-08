@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import UserLayout from '../../components/UserLayout';
 import Modal from '../../components/Modal';
 import ConfirmModal from '../../components/ConfirmModal';
-import { Star, Flag, Send, Loader2, ShoppingCart, Check } from 'lucide-react';
+import { Star, Flag, Send, Loader2, ShoppingCart, Check, X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 const API_BASE = 'http://localhost:5000/api';
@@ -17,8 +17,14 @@ const MovieDetail = () => {
 
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [cartNotice, setCartNotice] = useState('');
   const [reportId, setReportId] = useState(null);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
+  
+  const currentUserStr = localStorage.getItem('user');
+  const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
+  
+  const isOwned = movie && library.some(movieId => Number(movieId) === Number(movie.movie_id));
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,11 +62,28 @@ const MovieDetail = () => {
     return `http://localhost:5000${path}`;
   };
 
+  const handleAddToCart = async () => {
+    if (isOwned) {
+      setCartNotice('คุณเป็นเจ้าของหนังเรื่องนี้แล้ว');
+      return;
+    }
+
+    const result = await addToCart(movie.movie_id);
+    if (!result?.success) {
+      setCartNotice(result?.message || 'ไม่สามารถเพิ่มหนังเข้าตะกร้าได้');
+    }
+  };
+
   const submitReview = async (e) => {
     e.preventDefault();
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       if (!user) return alert("Please login first");
+      if (!isOwned) {
+        setIsReviewOpen(false);
+        setCartNotice('ท่านยังไม่เป็นเจ้าของหนังเรื่องนี้');
+        return;
+      }
       
       const res = await fetch(`${API_BASE}/reviews`, {
         method: 'POST',
@@ -87,6 +110,34 @@ const MovieDetail = () => {
     } catch(err) {
       console.error(err);
       alert("Error submitting review");
+    }
+  };
+
+  const submitReport = async () => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    const token = localStorage.getItem('token');
+    if (!user || !token) {
+      setIsReportOpen(false);
+      setCartNotice('Please login first');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/reviews/${reportId}/report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ reason: 'Reported from movie detail page' })
+      });
+      const data = await res.json();
+      setIsReportOpen(false);
+      setCartNotice(data.message || (data.success ? 'ส่งรายงานรีวิวให้ Admin แล้ว' : 'ไม่สามารถ report review ได้'));
+    } catch (err) {
+      console.error(err);
+      setIsReportOpen(false);
+      setCartNotice('ไม่สามารถ report review ได้');
     }
   };
 
@@ -134,34 +185,63 @@ const MovieDetail = () => {
             </div>
             
             <div className="prose prose-gray max-w-none mb-8">
-              <p className="text-gray-600 leading-relaxed text-lg">
-                <strong>Released Date:</strong> {new Date(movie.movie_releasedate).toLocaleDateString()}
-              </p>
-              {movie.actors && movie.actors.length > 0 && (
-                <p className="text-gray-600 text-sm mt-2">
-                  <strong>Cast:</strong> {movie.actors.map(a => a.actor_name).join(', ')}
-                </p>
+              {movie.detail && movie.detail !== '-' && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">เรื่องย่อ (Synopsis)</h3>
+                  <p className="text-gray-600 leading-relaxed text-sm whitespace-pre-wrap">
+                    {movie.detail}
+                  </p>
+                </div>
               )}
+              
+              <div className="space-y-2">
+                <p className="text-gray-600 text-sm">
+                  <strong>Released Date:</strong> {new Date(movie.movie_releasedate).toLocaleDateString()}
+                </p>
+                {movie.actors && movie.actors.length > 0 && (
+                  <p className="text-gray-600 text-sm">
+                    <strong>Cast:</strong> {movie.actors.map(a => a.actor_name).join(', ')}
+                  </p>
+                )}
+                {movie.authors && movie.authors.length > 0 && (
+                  <p className="text-gray-600 text-sm">
+                    <strong>Author:</strong> {movie.authors.map(a => a.author_name).join(', ')}
+                  </p>
+                )}
+              </div>
             </div>
 
-            {!library.includes(movie.movie_id) ? (
+            {!isOwned ? (
               <button 
-                onClick={() => addToCart(movie.movie_id)}
+                onClick={handleAddToCart}
                 className="mt-4 px-8 py-4 bg-figma-blue text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95 flex items-center justify-center gap-2"
               >
                 <ShoppingCart size={20} /> Add to Cart - ${parseFloat(movie.movie_cost || 0).toFixed(2)}
               </button>
             ) : (
-              <div className="mt-4 px-8 py-4 bg-green-50 text-green-700 font-bold rounded-2xl border border-green-200 flex items-center justify-center gap-2 w-full lg:w-max">
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                className="mt-4 px-8 py-4 bg-green-50 text-green-700 font-bold rounded-2xl border border-green-200 hover:bg-green-100 transition-all active:scale-95 flex items-center justify-center gap-2 w-full lg:w-max"
+              >
                 <Check size={20} /> คุณเป็นเจ้าของเรื่องนี้แล้ว
-              </div>
+              </button>
             )}
           </div>
 
           <div className="pt-10 border-t border-gray-100">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-black text-gray-900">User Reviews</h2>
-              <button onClick={() => setIsReviewOpen(true)} className="px-4 py-2 bg-gray-50 text-figma-blue font-bold text-sm rounded-xl hover:bg-blue-50 transition-colors flex items-center gap-2">
+              <button
+                onClick={() => {
+                  if (isOwned) {
+                    setIsReviewOpen(true);
+                  } else {
+                    setCartNotice('ท่านยังไม่เป็นเจ้าของหนังเรื่องนี้');
+                  }
+                }}
+                className="px-4 py-2 bg-gray-50 text-figma-blue font-bold text-sm rounded-xl hover:bg-blue-50 transition-colors flex items-center gap-2"
+              >
                 <Star size={16} /> Write a Review
               </button>
             </div>
@@ -182,9 +262,11 @@ const MovieDetail = () => {
                         </div>
                       </div>
                     </div>
-                    <button onClick={() => { setReportId(r.review_id); setIsReportOpen(true); }} className="text-gray-300 hover:text-red-500 transition-colors p-1" title="Report Review">
-                      <Flag size={14} />
-                    </button>
+                    {(!currentUser || r.user_id !== currentUser.user_id) && (
+                      <button onClick={() => { setReportId(r.review_id); setIsReportOpen(true); }} className="text-gray-300 hover:text-red-500 transition-colors p-1" title="Report Review">
+                        <Flag size={14} />
+                      </button>
+                    )}
                   </div>
                   <p className="text-gray-600 text-sm leading-relaxed">{r.comment}</p>
                   <span className="text-[10px] font-medium text-gray-400 mt-3 block">
@@ -202,6 +284,27 @@ const MovieDetail = () => {
           </div>
         </div>
       </div>
+
+      <Modal isOpen={Boolean(cartNotice)} onClose={() => setCartNotice('')} title="แจ้งเตือน">
+        <div className="space-y-5 text-center">
+          {cartNotice === 'ท่านยังไม่เป็นเจ้าของหนังเรื่องนี้' || cartNotice.includes('ไม่สามารถ') || cartNotice.includes('Please') ? (
+            <div className="mx-auto w-14 h-14 rounded-full bg-red-50 text-red-600 flex items-center justify-center">
+              <X size={28} />
+            </div>
+          ) : (
+            <div className="mx-auto w-14 h-14 rounded-full bg-green-50 text-green-600 flex items-center justify-center">
+              <Check size={28} />
+            </div>
+          )}
+          <p className="text-gray-700 font-medium">{cartNotice}</p>
+          <button
+            onClick={() => setCartNotice('')}
+            className="w-full px-5 py-3 bg-figma-blue text-white font-bold rounded-xl hover:bg-blue-700 transition-all active:scale-95"
+          >
+            ตกลง
+          </button>
+        </div>
+      </Modal>
 
       <Modal isOpen={isReviewOpen} onClose={() => setIsReviewOpen(false)} title="Write a Review">
         <form className="space-y-5" onSubmit={submitReview}>
@@ -240,9 +343,11 @@ const MovieDetail = () => {
       <ConfirmModal 
         isOpen={isReportOpen} 
         onClose={() => setIsReportOpen(false)} 
-        onConfirm={() => { console.log("Reported Review ID:", reportId); setIsReportOpen(false); }} 
+        onConfirm={submitReport}
         title="Report Review" 
         message="Are you sure you want to report this review to the administration for moderation? This action cannot be undone." 
+        confirmLabel="Report"
+        confirmColor="red"
       />
     </UserLayout>
   );

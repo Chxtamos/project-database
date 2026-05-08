@@ -7,6 +7,9 @@ import { useApp } from '../context/AppContext';
 const UserLayout = ({ children, pageTitle }) => {
   const { cartMovies } = useApp();
 
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+
   return (
     <div className="min-h-screen bg-figma-bg font-inter text-figma-dark">
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
@@ -38,8 +41,9 @@ const UserLayout = ({ children, pageTitle }) => {
                   </span>
                 )}
               </Link>
-              <Link to="/user/profile" className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+              <Link to="/user/profile" className="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors flex items-center gap-2">
                 <User size={20} />
+                {user && <span className="text-sm font-bold hidden sm:block">{user.username}</span>}
               </Link>
             </div>
           </div>

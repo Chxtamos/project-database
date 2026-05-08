@@ -1,8 +1,21 @@
 const express = require('express');
 const pool = require('../db');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, adminOnly } = require('../middleware/auth');
 
 const router = express.Router();
+
+const refreshMovieRating = async (db, movieId) => {
+  await db.query(
+    `UPDATE public.movies
+     SET movie_rating = (
+       SELECT ROUND(AVG(rating))::int
+       FROM public.review
+       WHERE movie_id = $1
+     )
+     WHERE movie_id = $1`,
+    [movieId]
+  );
+};
 
 // ─────────────────────────────────────────────
 // GET /api/reviews
@@ -36,10 +49,23 @@ router.get('/', authMiddleware, async (req, res) => {
       `SELECT
          r.*,
          u.username,
-         m.movie_name
+         m.movie_name,
+         COALESCE(rep.report_count, 0)::int AS report_count,
+         COALESCE(rep.reporters, '') AS report_reporters,
+         rep.last_report_date
        FROM public.review r
        JOIN public.users u ON r.user_id = u.user_id
        JOIN public.movies m ON r.movie_id = m.movie_id
+       LEFT JOIN (
+         SELECT
+           rr.review_id,
+           COUNT(*) AS report_count,
+           STRING_AGG(ru.username, ', ' ORDER BY rr.report_date DESC) AS reporters,
+           MAX(rr.report_date) AS last_report_date
+         FROM public.report_review rr
+         JOIN public.users ru ON rr.reporter_id = ru.user_id
+         GROUP BY rr.review_id
+       ) rep ON rep.review_id = r.review_id
        ${where}
        ORDER BY r.date_review DESC
        LIMIT $${idx} OFFSET $${idx + 1}`,
@@ -62,6 +88,63 @@ router.get('/', authMiddleware, async (req, res) => {
 // ─────────────────────────────────────────────
 // GET /api/reviews/:id
 // ─────────────────────────────────────────────
+router.get('/reports/all', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT
+         rr.*,
+         u.username AS reporter_name,
+         r.comment  AS review_comment,
+         r.rating   AS review_rating,
+         m.movie_name
+       FROM public.report_review rr
+       JOIN public.users u   ON rr.reporter_id = u.user_id
+       JOIN public.review r  ON rr.review_id   = r.review_id
+       JOIN public.movies m  ON r.movie_id      = m.movie_id
+       ORDER BY rr.report_date DESC`
+    );
+    res.json({ success: true, total: result.rows.length, data: result.rows });
+  } catch (err) {
+    console.error('Get reports error:', err.message);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
+  }
+});
+
+router.post('/:id/report', authMiddleware, async (req, res) => {
+  const reporterId = req.user?.id;
+  const reviewId = parseInt(req.params.id);
+  const reason = req.body?.reason?.trim() || 'Reported by user';
+
+  if (!reporterId || !reviewId) {
+    return res.status(400).json({ success: false, message: 'ข้อมูล report ไม่ครบถ้วน' });
+  }
+
+  try {
+    const existingReview = await pool.query(
+      'SELECT review_id FROM public.review WHERE review_id = $1',
+      [reviewId]
+    );
+
+    if (existingReview.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'ไม่พบรีวิว' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO public.report_review (reporter_id, review_id, reason)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (review_id, reporter_id)
+       DO UPDATE SET reason = EXCLUDED.reason, report_date = CURRENT_TIMESTAMP
+       RETURNING *`,
+      [reporterId, reviewId, reason]
+    );
+
+    res.status(201).json({ success: true, message: 'ส่งรายงานรีวิวให้ Admin แล้ว', data: result.rows[0] });
+  } catch (err) {
+    console.error('Report review error:', err.message);
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
+  }
+});
+
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
@@ -114,6 +197,7 @@ router.post('/', authMiddleware, async (req, res) => {
        RETURNING *`,
       [user_id, movie_id, parseInt(review_number), ratingVal, comment || null]
     );
+    await refreshMovieRating(pool, movie_id);
     res.status(201).json({ success: true, message: 'เพิ่มรีวิวสำเร็จ', data: result.rows[0] });
   } catch (err) {
     console.error('Create review error:', err.message);
@@ -161,7 +245,33 @@ router.put('/:id', authMiddleware, async (req, res) => {
 // ─────────────────────────────────────────────
 // DELETE /api/reviews/:id
 // ─────────────────────────────────────────────
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', authMiddleware, adminOnly, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('DELETE FROM public.report_review WHERE review_id = $1', [req.params.id]);
+    const result = await client.query(
+      'DELETE FROM public.review WHERE review_id = $1 RETURNING review_id, movie_id',
+      [req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, message: 'ไม่พบรีวิว' });
+    }
+
+    await refreshMovieRating(client, result.rows[0].movie_id);
+
+    await client.query('COMMIT');
+    return res.json({ success: true, message: 'ลบรีวิวสำเร็จ' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Delete review error:', err.message);
+    return res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
+  } finally {
+    client.release();
+  }
+
   try {
     const result = await pool.query(
       'DELETE FROM public.review WHERE review_id = $1 RETURNING review_id',
@@ -181,7 +291,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 // GET /api/reviews/reports/all
 // ดึง report_review ทั้งหมด
 // ─────────────────────────────────────────────
-router.get('/reports/all', authMiddleware, async (req, res) => {
+router.get('/reports/all', authMiddleware, adminOnly, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT

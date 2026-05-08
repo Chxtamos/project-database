@@ -14,15 +14,18 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
+      const token = localStorage.getItem('token');
+
       // Fetch Movies (for Trending section)
-      const movieRes = await fetch(`${API_BASE}/movies?limit=5`);
+      const movieRes = await fetch(`${API_BASE}/dashboard/top-movies?limit=5`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const movieData = await movieRes.json();
       if (movieData.success) {
         setTrendingMovies(movieData.data);
       }
 
       // Fetch User Count (Requires token)
-      const token = localStorage.getItem('token');
       const userRes = await fetch(`${API_BASE}/users?limit=1`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -118,9 +121,11 @@ const Dashboard = () => {
                   <h3 className="font-bold text-gray-900 text-sm mb-1 line-clamp-2 leading-tight">{movie.movie_name}</h3>
                   <div className="mt-auto flex items-end justify-between pt-2">
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-                      {movie.genres ? movie.genres.map(g => g.genre_name).slice(0,1) : 'Movie'}
+                      {movie.genres?.length
+                        ? movie.genres.map(g => g.genre_name || g).slice(0, 1).join(', ')
+                        : 'Movie'}
                     </span>
-                    <span className="text-sm font-bold text-figma-blue">${movie.movie_cost}</span>
+                    <span className="text-sm font-bold text-figma-blue">{movie.movie_rating || 'N/A'} ★</span>
                   </div>
                 </div>
               </div>

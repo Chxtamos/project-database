@@ -7,6 +7,7 @@ import generatePayload from 'promptpay-qr';
 import { QRCodeSVG } from 'qrcode.react';
 
 const API_BASE = 'http://localhost:5000/api';
+const PAYMENT_QR_REF = '/qr_codes/promptpay_qr.jpg';
 
 const Checkout = () => {
   const location = useLocation();
@@ -189,29 +190,29 @@ const Checkout = () => {
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all min-h-[220px] ${
+                className={`border-2 border-dashed rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all w-[19rem] h-[19rem] mx-auto ${
                   preview
                     ? 'border-figma-blue bg-blue-50'
                     : 'border-gray-200 bg-gray-50 hover:border-figma-blue hover:bg-blue-50'
                 }`}
               >
                 {preview ? (
-                  <div className="relative w-full">
-                    <img src={preview} alt="Slip preview" className="max-h-48 mx-auto object-contain rounded-xl" />
+                  <div className="relative w-full h-full flex flex-col items-center justify-center">
+                    <img src={preview} alt="Slip preview" className="max-h-40 max-w-full object-contain rounded-xl" />
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setSlip(null); setPreview(null); }}
-                      className="absolute top-0 right-0 -mt-2 -mr-2 bg-white border border-gray-200 rounded-full p-1 shadow hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                      className="absolute top-0 right-0 -mt-2 -mr-2 bg-white border border-gray-200 rounded-full p-1 shadow hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors z-10"
                     >
                       <X size={14} />
                     </button>
-                    <p className="text-center text-xs text-gray-400 mt-3">{slip?.name}</p>
+                    <p className="text-center text-xs text-gray-400 mt-2 truncate w-full">{slip?.name}</p>
                   </div>
                 ) : (
                   <>
                     <Image size={40} className="text-gray-300 mb-3" />
-                    <p className="font-bold text-gray-500 text-sm">ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</p>
-                    <p className="text-xs text-gray-400 mt-1">รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 10MB</p>
+                    <p className="font-bold text-gray-500 text-sm text-center">ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</p>
+                    <p className="text-xs text-gray-400 mt-2 text-center">รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 10MB</p>
                   </>
                 )}
               </div>

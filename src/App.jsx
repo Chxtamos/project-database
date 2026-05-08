@@ -13,6 +13,7 @@ import ManageMovies from './pages/ManageMovies';
 import ManagePayments from './pages/ManagePayments';
 import ManageReviews from './pages/ManageReviews';
 import ManageUsers from './pages/ManageUsers';
+import ManageCredits from './pages/ManageCredits';
 import SystemReport from './pages/SystemReport';
 import DatabaseMonitor from './pages/DatabaseMonitor';
 
@@ -42,6 +43,7 @@ function App() {
           <Route path="/payments" element={<ManagePayments />} />
           <Route path="/reviews" element={<ManageReviews />} />
           <Route path="/users" element={<ManageUsers />} />
+          <Route path="/credits" element={<ManageCredits />} />
           <Route path="/report" element={<SystemReport />} />
           <Route path="/database" element={<DatabaseMonitor />} />
 

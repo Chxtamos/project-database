@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Film, CreditCard, Star, Users, FileText, LogOut } from 'lucide-react';
+import { LayoutDashboard, Film, CreditCard, Star, Users, FileText, LogOut, UserRoundCog } from 'lucide-react';
 
 const Layout = ({ children, pageTitle, pageDescription }) => {
   return (
@@ -14,6 +14,7 @@ const Layout = ({ children, pageTitle, pageDescription }) => {
           <NavItem to="/payments" icon={<CreditCard size={20} />} label="Manage Payments" />
           <NavItem to="/reviews" icon={<Star size={20} />} label="Manage Reviews" />
           <NavItem to="/users" icon={<Users size={20} />} label="Manage Users" />
+          <NavItem to="/credits" icon={<UserRoundCog size={20} />} label="Manage Actor & Author" />
           <NavItem to="/report" icon={<FileText size={20} />} label="System Report" />
         </nav>
         <div className="p-4 border-t border-gray-200">
