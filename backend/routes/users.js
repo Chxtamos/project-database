@@ -3,6 +3,8 @@ const pool = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_PATTERN = /^\d+$/;
 
 // ─────────────────────────────────────────────
 // GET /api/users
@@ -74,6 +76,16 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // ─────────────────────────────────────────────
 router.put('/:id', authMiddleware, async (req, res) => {
     const { username, email, telephone } = req.body;
+    const nextEmail = typeof email === 'string' ? email.trim() : email;
+    const nextTelephone = typeof telephone === 'string' ? telephone.trim() : telephone;
+
+    if (nextEmail !== undefined && !EMAIL_PATTERN.test(nextEmail)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
+    }
+
+    if (nextTelephone !== undefined && !PHONE_PATTERN.test(nextTelephone)) {
+      return res.status(400).json({ success: false, message: 'Telephone must contain numbers only.' });
+    }
 
   try {
     const existing = await pool.query('SELECT * FROM public.users WHERE user_id = $1', [req.params.id]);
@@ -87,9 +99,9 @@ router.put('/:id', authMiddleware, async (req, res) => {
          username  = $1,
          email     = $2,
          telephone = $3
-       WHERE user_id = $4
+      WHERE user_id = $4
        RETURNING user_id, username, email, telephone, register_date`,
-      [username ?? old.username, email ?? old.email, telephone ?? old.telephone, req.params.id]
+      [username ?? old.username, nextEmail ?? old.email, nextTelephone ?? old.telephone, req.params.id]
     );
     res.json({ success: true, message: 'อัปเดตข้อมูลสำเร็จ', data: result.rows[0] });
   } catch (err) {

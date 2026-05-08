@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail } from 'lucide-react';
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -12,12 +14,19 @@ const LoginPage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+
+    const nextEmail = email.trim();
+
+    if (!EMAIL_PATTERN.test(nextEmail)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
     
     try {
       const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: nextEmail, password }),
       });
 
       const data = await response.json();

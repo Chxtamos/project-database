@@ -95,8 +95,7 @@ CREATE TABLE "public"."cart_movies" (
 WITH (oids = false);
 
 INSERT INTO "cart_movies" ("cart_id", "movie_id") VALUES
-(15,	10),
-(12,	11);
+(15,	10);
 
 DROP TABLE IF EXISTS "genre";
 DROP SEQUENCE IF EXISTS "public".genre_genre_id_seq;
@@ -362,11 +361,6 @@ CREATE TABLE "public"."users" (
     "telephone" character varying(15) NOT NULL,
     "password" text NOT NULL,
     "register_date" timestamp DEFAULT CURRENT_TIMESTAMP,
-    "reset_token" character varying(255),
-    "reset_token_expiry" timestamp,
-    "new_email_pending" character varying(255),
-    "verify_email_token" character varying(255),
-    "verify_email_expiry" timestamp,
     CONSTRAINT "users_pkey" PRIMARY KEY ("user_id")
 )
 WITH (oids = false);
@@ -375,18 +369,20 @@ CREATE UNIQUE INDEX users_email_key ON public.users USING btree (email);
 
 CREATE UNIQUE INDEX users_telephone_key ON public.users USING btree (telephone);
 
-INSERT INTO "users" ("user_id", "username", "email", "telephone", "password", "register_date", "reset_token", "reset_token_expiry", "new_email_pending", "verify_email_token", "verify_email_expiry") VALUES
-(2,	'user_2',	'test2@example.com',	'081234562',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889',	NULL,	NULL,	NULL,	NULL,	NULL),
-(3,	'user_3',	'test3@example.com',	'081234563',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889',	NULL,	NULL,	NULL,	NULL,	NULL),
-(4,	'user_4',	'test4@example.com',	'081234564',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889',	NULL,	NULL,	NULL,	NULL,	NULL),
-(5,	'user_5',	'test5@example.com',	'081234565',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889',	NULL,	NULL,	NULL,	NULL,	NULL),
-(6,	'user_6',	'test6@example.com',	'081234566',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889',	NULL,	NULL,	NULL,	NULL,	NULL),
-(7,	'user_7',	'test7@example.com',	'081234567',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889',	NULL,	NULL,	NULL,	NULL,	NULL),
-(8,	'user_8',	'test8@example.com',	'081234568',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889',	NULL,	NULL,	NULL,	NULL,	NULL),
-(9,	'user_9',	'test9@example.com',	'081234569',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889',	NULL,	NULL,	NULL,	NULL,	NULL),
-(13,	'TestUser',	'user@movie.com',	'0812345678',	'$2a$10$skIFr38n1BlcHNyIAYBTdupQw6pYgESj1pJ0FAZ3v8tEx7eGIZdN6',	'2026-05-07 17:00:58.433799',	NULL,	NULL,	NULL,	NULL,	NULL),
-(14,	'Lui',	'phalat.lui@gmail.com',	'087',	'$2a$10$lUCMn6HFEE9OGYU.36LjGOnRxz1.bqjArJUIOmDJ4/QkoytZd8c2.',	'2026-05-08 13:20:16.44417',	'f108d835b9a1de319cae592c67b6b2c1efb7c4552a0383e4021bdbd0d6d85cfb',	'2026-05-08 21:31:30.131',	NULL,	NULL,	NULL),
-(1,	'MOSราชาSpaylater',	'mos@mail.com',	'081234561',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889',	NULL,	NULL,	'mos@example.com',	'd6c0a02af7c9c1fc6921f0873e66bd2dd11674604d3c2dc87c01a68da53cffd7',	'2026-05-08 21:40:14.747');
+INSERT INTO "users" ("user_id", "username", "email", "telephone", "password", "register_date") VALUES
+(2,	'user_2',	'test2@example.com',	'081234562',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889'),
+(3,	'user_3',	'test3@example.com',	'081234563',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889'),
+(4,	'user_4',	'test4@example.com',	'081234564',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889'),
+(5,	'user_5',	'test5@example.com',	'081234565',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889'),
+(6,	'user_6',	'test6@example.com',	'081234566',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889'),
+(7,	'user_7',	'test7@example.com',	'081234567',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889'),
+(8,	'user_8',	'test8@example.com',	'081234568',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889'),
+(9,	'user_9',	'test9@example.com',	'081234569',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889'),
+(13,	'TestUser',	'user@movie.com',	'0812345678',	'$2a$10$skIFr38n1BlcHNyIAYBTdupQw6pYgESj1pJ0FAZ3v8tEx7eGIZdN6',	'2026-05-07 17:00:58.433799'),
+(1,	'MOSราชาSpaylater',	'mos@mail.com',	'081234561',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889'),
+(16,	'lui2',	'phalat.101@gmail.com',	'999',	'$2a$10$jRzh6DUO7actIrOoRhBeoOy8WUZr2KDAjcG7.uAmTsNOTX.a8YokG',	'2026-05-08 14:38:00.435253'),
+(17,	'12313',	'phalat1.lui@gmail.com',	'123',	'$2a$10$GUcfEQ3S7JyNCqbKihQhp.JoB1XmRUTwk2BalKzZyI8Hja.wFs.KK',	'2026-05-08 14:38:58.127515'),
+(14,	'Lui',	'phalat.lui@gmail.com',	'087',	'$2a$10$lUCMn6HFEE9OGYU.36LjGOnRxz1.bqjArJUIOmDJ4/QkoytZd8c2.',	'2026-05-08 13:20:16.44417');
 
 ALTER TABLE ONLY "public"."cart" ADD CONSTRAINT "cart_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;
 
@@ -422,4 +418,4 @@ ALTER TABLE ONLY "public"."review" ADD CONSTRAINT "review_user_id_fkey" FOREIGN 
 
 ALTER TABLE ONLY "public"."transfer_slip" ADD CONSTRAINT "transfer_slip_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(user_id);
 
--- 2026-05-08 14:06:02 UTC
+-- 2026-05-08 14:42:46 UTC

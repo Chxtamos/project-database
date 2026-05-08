@@ -7,6 +7,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 const API_BASE = 'http://localhost:5000/api';
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_PATTERN = /^\d+$/;
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -74,6 +76,22 @@ const Profile = () => {
     const token = localStorage.getItem('token');
     if (!user || !token) return;
 
+    const nextForm = {
+      ...form,
+      email: form.email.trim(),
+      telephone: form.telephone.trim(),
+    };
+
+    if (!EMAIL_PATTERN.test(nextForm.email)) {
+      setSaveError('Please enter a valid email address.');
+      return;
+    }
+
+    if (!PHONE_PATTERN.test(nextForm.telephone)) {
+      setSaveError('Telephone must contain numbers only.');
+      return;
+    }
+
     setSaving(true);
     setSaveError('');
     setSuccessMessage('');
@@ -82,7 +100,7 @@ const Profile = () => {
       const res = await fetch(`${API_BASE}/users/${user.user_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(form),
+        body: JSON.stringify(nextForm),
       });
       const data = await res.json();
       if (data.success) {
@@ -245,6 +263,7 @@ const Profile = () => {
                     type="email"
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    required
                     className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-figma-blue focus:ring-2 focus:ring-blue-100 outline-none text-sm font-medium transition-all"
                     placeholder="อีเมล"
                   />
@@ -263,9 +282,12 @@ const Profile = () => {
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">เบอร์โทรศัพท์</p>
                 {editing ? (
                   <input
-                    type="tel"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={form.telephone}
-                    onChange={(e) => setForm({ ...form, telephone: e.target.value })}
+                    onChange={(e) => setForm({ ...form, telephone: e.target.value.replace(/\D/g, '') })}
+                    required
                     className="w-full px-4 py-2.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-figma-blue focus:ring-2 focus:ring-blue-100 outline-none text-sm font-medium transition-all"
                     placeholder="เบอร์โทรศัพท์"
                   />

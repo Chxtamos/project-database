@@ -6,6 +6,8 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const sendTestEmail = async (to, subject, text) => {
   try {
     let testAccount = await nodemailer.createTestAccount();
@@ -75,14 +77,19 @@ router.post('/register', async (req, res) => {
 // ─────────────────────────────────────────────
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
+  const nextEmail = typeof email === 'string' ? email.trim() : email;
 
-  if (!email || !password) {
+  if (!nextEmail || !password) {
     return res.status(400).json({ success: false, message: 'กรุณากรอก email และ password' });
+  }
+
+  if (!EMAIL_PATTERN.test(nextEmail)) {
+    return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
   }
 
   try {
     // 1. Check admins table
-    let result = await pool.query('SELECT * FROM public.admins WHERE email = $1', [email]);
+    let result = await pool.query('SELECT * FROM public.admins WHERE email = $1', [nextEmail]);
     let role = 'admin';
     let user = null;
 
@@ -90,7 +97,7 @@ router.post('/login', async (req, res) => {
       user = result.rows[0];
     } else {
       // 2. If not admin, check users table
-      result = await pool.query('SELECT * FROM public.users WHERE email = $1', [email]);
+      result = await pool.query('SELECT * FROM public.users WHERE email = $1', [nextEmail]);
       if (result.rows.length > 0) {
         user = result.rows[0];
         role = 'user';
