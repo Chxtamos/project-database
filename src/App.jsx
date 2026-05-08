@@ -20,6 +20,7 @@ import Library from './pages/user/Library';
 import Playlists from './pages/user/Playlists';
 import Checkout from './pages/user/Checkout';
 import PlaylistEditor from './pages/user/PlaylistEditor';
+import Profile from './pages/user/Profile';
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
           <Route path="/user/library" element={<Library />} />
           <Route path="/user/playlists" element={<Playlists />} />
           <Route path="/user/playlists/:id/edit" element={<PlaylistEditor />} />
+          <Route path="/user/profile" element={<Profile />} />
         </Routes>
       </Router>
     </AppProvider>

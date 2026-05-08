@@ -13,7 +13,7 @@ const UserLayout = ({ children, pageTitle }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center gap-8">
-              <Link to="/user/home" className="text-2xl font-bold text-figma-blue">MovieStream</Link>
+              <Link to="/user/home" className="text-2xl font-bold text-figma-blue">FilmHub</Link>
               <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
                 <Link to="/user/home" className="hover:text-figma-blue transition-colors">Browse</Link>
                 <Link to="/user/library" className="hover:text-figma-blue transition-colors">My Library</Link>

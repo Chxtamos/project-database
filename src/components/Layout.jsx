@@ -7,7 +7,7 @@ const Layout = ({ children, pageTitle, pageDescription }) => {
     <div className="flex h-screen bg-figma-bg font-inter text-figma-dark">
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-6 text-2xl font-bold text-figma-blue">MovieAdmin</div>
+        <div className="p-6 text-2xl font-bold text-figma-blue">FilmHubAdmin</div>
         <nav className="flex-1 px-4 space-y-2">
           <NavItem to="/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" />
           <NavItem to="/movies" icon={<Film size={20} />} label="Manage Movies" />

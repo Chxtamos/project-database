@@ -42,8 +42,8 @@ const LoginPage = () => {
     <div className="h-screen w-full flex items-center justify-center bg-figma-bg font-inter">
       <div className="bg-white p-10 rounded-3xl shadow-xl border border-gray-100 w-full max-w-md">
         <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-figma-blue rounded-2xl mx-auto mb-4 flex items-center justify-center text-white text-3xl font-bold">M</div>
-          <h1 className="text-3xl font-bold text-figma-dark">Welcome Back</h1>
+          <div className="w-16 h-16 bg-figma-blue rounded-2xl mx-auto mb-4 flex items-center justify-center text-white text-3xl font-bold">FH</div>
+          <h1 className="text-3xl font-bold text-figma-dark">Welcome to FlimHub</h1>
           <p className="text-gray-500 mt-2">Login to manage your streaming platform</p>
         </div>
         {error && (
@@ -81,7 +81,7 @@ const LoginPage = () => {
             </div>
           </div>
           <button type="submit" className="w-full py-4 bg-figma-blue text-white rounded-xl font-bold text-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95">
-            Sign In
+            Log In
           </button>
         </form>
       </div>
