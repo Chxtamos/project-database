@@ -3,6 +3,7 @@ const pool = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
+const PAYMENT_QR_REF = '/qr_codes/promptpay_qr.jpg';
 
 // ─────────────────────────────────────────────
 // GET /api/payments
@@ -108,7 +109,7 @@ router.post('/', authMiddleware, async (req, res) => {
       `INSERT INTO public.payment (user_id, cart_id, amount, transaction_ref, qr_ref, status, expired_at)
        VALUES ($1, $2, $3, $4, $5, 0, $6)
        RETURNING *`,
-      [user_id, cart_id, parseFloat(amount), transaction_ref || null, qr_ref || null, expired_at]
+      [user_id, cart_id, parseFloat(amount), transaction_ref || null, qr_ref || PAYMENT_QR_REF, expired_at]
     );
     res.status(201).json({ success: true, message: 'บันทึกการชำระเงินสำเร็จ', data: result.rows[0] });
   } catch (err) {

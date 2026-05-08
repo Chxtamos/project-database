@@ -99,6 +99,15 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 
   try {
+    const ownership = await pool.query(
+      'SELECT 1 FROM public.library WHERE user_id = $1 AND movie_id = $2',
+      [user_id, movie_id]
+    );
+
+    if (ownership.rows.length === 0) {
+      return res.status(403).json({ success: false, message: 'ท่านยังไม่เป็นเจ้าของหนังเรื่องนี้' });
+    }
+
     const result = await pool.query(
       `INSERT INTO public.review (user_id, movie_id, review_number, rating, comment)
        VALUES ($1, $2, $3, $4, $5)
@@ -117,6 +126,8 @@ router.post('/', authMiddleware, async (req, res) => {
 // Body: rating, comment, review_number
 // ─────────────────────────────────────────────
 router.put('/:id', authMiddleware, async (req, res) => {
+  return res.status(403).json({ success: false, message: 'Admin cannot edit reviews.' });
+
   const { rating, comment, review_number } = req.body;
 
   try {

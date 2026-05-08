@@ -5,6 +5,7 @@ const pool    = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
+const PAYMENT_QR_REF = '/qr_codes/promptpay_qr.jpg';
 
 // ─── Multer for slip image upload ──────────────────────────────
 const storage = multer.diskStorage({
@@ -73,9 +74,9 @@ router.post('/', authMiddleware, upload.single('slip'), async (req, res) => {
 
     // 2. Create payment record (status 0 = pending, waiting admin approve)
     const paymentResult = await client.query(
-      `INSERT INTO public.payment (user_id, cart_id, amount, slip_id, status, payment_date, expired_at)
-       VALUES ($1, $2, $3, $4, 0, NOW(), NOW() + INTERVAL '24 hours') RETURNING *`,
-      [user_id, cart_id, parseFloat(amount), slip.slip_id]
+      `INSERT INTO public.payment (user_id, cart_id, amount, slip_id, qr_ref, status, payment_date, expired_at)
+       VALUES ($1, $2, $3, $4, $5, 0, NOW(), NOW() + INTERVAL '24 hours') RETURNING *`,
+      [user_id, cart_id, parseFloat(amount), slip.slip_id, PAYMENT_QR_REF]
     );
 
     await client.query('COMMIT');

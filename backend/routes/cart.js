@@ -33,8 +33,11 @@ router.get('/:user_id', authMiddleware, async (req, res) => {
       `SELECT m.*
        FROM public.cart_movies cm
        JOIN public.movies m ON cm.movie_id = m.movie_id
-       WHERE cm.cart_id = $1`,
-      [cart.cart_id]
+       LEFT JOIN public.library l
+         ON l.user_id = $2 AND l.movie_id = cm.movie_id
+       WHERE cm.cart_id = $1
+         AND l.library_id IS NULL`,
+      [cart.cart_id, cart.user_id]
     );
 
     res.json({
