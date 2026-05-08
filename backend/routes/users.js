@@ -29,7 +29,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
     values.push(parseInt(limit), offset);
     const result = await pool.query(
-      `SELECT user_id, username, email, telephone, plan, register_date
+      `SELECT user_id, username, email, telephone, register_date
        FROM public.users ${where}
        ORDER BY register_date DESC
        LIMIT $${idx} OFFSET $${idx + 1}`,
@@ -55,7 +55,7 @@ router.get('/', authMiddleware, async (req, res) => {
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT user_id, username, email, telephone, plan, register_date FROM public.users WHERE user_id = $1',
+      'SELECT user_id, username, email, telephone, register_date FROM public.users WHERE user_id = $1',
       [req.params.id]
     );
     if (result.rows.length === 0) {
@@ -73,7 +73,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // แก้ไข username, email, telephone (ไม่เปลี่ยน password ที่นี่)
 // ─────────────────────────────────────────────
 router.put('/:id', authMiddleware, async (req, res) => {
-    const { username, email, telephone, plan } = req.body;
+    const { username, email, telephone } = req.body;
 
   try {
     const existing = await pool.query('SELECT * FROM public.users WHERE user_id = $1', [req.params.id]);
@@ -86,11 +86,10 @@ router.put('/:id', authMiddleware, async (req, res) => {
       `UPDATE public.users SET
          username  = $1,
          email     = $2,
-         telephone = $3,
-         plan      = $4
-       WHERE user_id = $5
-       RETURNING user_id, username, email, telephone, plan, register_date`,
-      [username ?? old.username, email ?? old.email, telephone ?? old.telephone, plan ?? old.plan, req.params.id]
+         telephone = $3
+       WHERE user_id = $4
+       RETURNING user_id, username, email, telephone, register_date`,
+      [username ?? old.username, email ?? old.email, telephone ?? old.telephone, req.params.id]
     );
     res.json({ success: true, message: 'อัปเดตข้อมูลสำเร็จ', data: result.rows[0] });
   } catch (err) {

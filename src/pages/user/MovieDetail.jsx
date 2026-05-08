@@ -3,14 +3,14 @@ import { useParams } from 'react-router-dom';
 import UserLayout from '../../components/UserLayout';
 import Modal from '../../components/Modal';
 import ConfirmModal from '../../components/ConfirmModal';
-import { Star, Flag, Send, Loader2, ShoppingCart } from 'lucide-react';
+import { Star, Flag, Send, Loader2, ShoppingCart, Check } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 const API_BASE = 'http://localhost:5000/api';
 
 const MovieDetail = () => {
   const { id } = useParams();
-  const { addToCart } = useApp();
+  const { addToCart, library } = useApp();
   const [movie, setMovie] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -144,12 +144,18 @@ const MovieDetail = () => {
               )}
             </div>
 
-            <button 
-              onClick={() => addToCart(movie.movie_id)}
-              className="mt-4 px-8 py-4 bg-figma-blue text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95 flex items-center justify-center gap-2"
-            >
-              <ShoppingCart size={20} /> Add to Cart - ${parseFloat(movie.movie_cost || 0).toFixed(2)}
-            </button>
+            {!library.includes(movie.movie_id) ? (
+              <button 
+                onClick={() => addToCart(movie.movie_id)}
+                className="mt-4 px-8 py-4 bg-figma-blue text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95 flex items-center justify-center gap-2"
+              >
+                <ShoppingCart size={20} /> Add to Cart - ${parseFloat(movie.movie_cost || 0).toFixed(2)}
+              </button>
+            ) : (
+              <div className="mt-4 px-8 py-4 bg-green-50 text-green-700 font-bold rounded-2xl border border-green-200 flex items-center justify-center gap-2 w-full lg:w-max">
+                <Check size={20} /> คุณเป็นเจ้าของเรื่องนี้แล้ว
+              </div>
+            )}
           </div>
 
           <div className="pt-10 border-t border-gray-100">

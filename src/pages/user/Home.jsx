@@ -8,7 +8,7 @@ const API_BASE = 'http://localhost:5000/api';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { addToCart } = useApp();
+  const { addToCart, library } = useApp();
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -52,12 +52,18 @@ const Home = () => {
                 <h3 className="font-bold text-sm truncate">{movie.movie_name}</h3>
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-figma-blue font-bold text-sm">${parseFloat(movie.movie_cost || 0).toFixed(2)}</span>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); addToCart(movie.movie_id); }}
-                    className="p-1.5 bg-figma-blue text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <ShoppingCart size={14} />
-                  </button>
+                  {!library.includes(movie.movie_id) ? (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); addToCart(movie.movie_id); }}
+                      className="p-1.5 bg-figma-blue text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <ShoppingCart size={14} />
+                    </button>
+                  ) : (
+                    <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md border border-green-100">
+                      คุณเป็นเจ้าของแล้ว
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

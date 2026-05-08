@@ -84,6 +84,24 @@ router.post('/:cart_id/movies', authMiddleware, async (req, res) => {
     return res.status(400).json({ success: false, message: 'movie_id เป็นข้อมูลที่จำเป็น' });
   }
   try {
+    // 1. ตรวจสอบว่า cart นี้เป็นของ user_id ใด
+    const cartRes = await pool.query('SELECT user_id FROM public.cart WHERE cart_id = $1', [req.params.cart_id]);
+    if (cartRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'ไม่พบ cart' });
+    }
+    const userId = cartRes.rows[0].user_id;
+
+    // 2. ตรวจสอบว่ามีหนังใน library แล้วหรือยัง
+    const libRes = await pool.query(
+      'SELECT 1 FROM public.library WHERE user_id = $1 AND movie_id = $2',
+      [userId, movie_id]
+    );
+
+    if (libRes.rows.length > 0) {
+      return res.status(400).json({ success: false, message: 'คุณเป็นเจ้าของภาพยนตร์เรื่องนี้แล้ว' });
+    }
+
+    // 3. เพิ่มเข้า cart
     await pool.query(
       'INSERT INTO public.cart_movies (cart_id, movie_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
       [req.params.cart_id, movie_id]

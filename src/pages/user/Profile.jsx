@@ -19,7 +19,9 @@ const Profile = () => {
   const [form, setForm] = useState({ username: '', email: '', telephone: '' });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
+
 
   const getUser = () => {
     try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
@@ -64,6 +66,8 @@ const Profile = () => {
     fetchData();
   }, [navigate]);
 
+
+
   // ─── บันทึกการแก้ไข ───
   const handleSave = async () => {
     const user = getUser();
@@ -72,7 +76,8 @@ const Profile = () => {
 
     setSaving(true);
     setSaveError('');
-    setSaveSuccess(false);
+    setSuccessMessage('');
+
     try {
       const res = await fetch(`${API_BASE}/users/${user.user_id}`, {
         method: 'PUT',
@@ -83,10 +88,10 @@ const Profile = () => {
       if (data.success) {
         setProfile(data.data);
         // อัพเดต localStorage
-        localStorage.setItem('user', JSON.stringify({ ...user, username: data.data.username, email: data.data.email }));
+        localStorage.setItem('user', JSON.stringify({ ...user, username: data.data.username, telephone: data.data.telephone, email: data.data.email }));
         setEditing(false);
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
+        setSuccessMessage('บันทึกข้อมูลสำเร็จ!');
+        setTimeout(() => setSuccessMessage(''), 3000);
       } else {
         setSaveError(data.message || 'เกิดข้อผิดพลาด');
       }
@@ -171,9 +176,9 @@ const Profile = () => {
                 </>
               ) : (
                 <button
-                  onClick={() => { setEditing(true); setSaveSuccess(false); }}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-blue-50 hover:text-figma-blue transition-all active:scale-95 text-sm"
-                >
+                    onClick={() => { setEditing(true); setSuccessMessage(''); }}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-blue-50 hover:text-figma-blue transition-all active:scale-95 text-sm"
+                  >
                   <Edit2 size={16} /> แก้ไขข้อมูล
                 </button>
               )}
@@ -189,10 +194,10 @@ const Profile = () => {
         </div>
 
         {/* ─── Success Banner ─── */}
-        {saveSuccess && (
+        {successMessage && (
           <div className="flex items-center gap-2 p-4 bg-green-50 border border-green-100 rounded-2xl text-green-700 font-medium text-sm">
             <Check size={18} className="flex-shrink-0" />
-            บันทึกข้อมูลสำเร็จ!
+            {successMessage}
           </div>
         )}
 

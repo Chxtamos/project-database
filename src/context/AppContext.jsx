@@ -7,7 +7,7 @@ export const AppProvider = ({ children }) => {
   const [cart, setCart] = useState(null);
   const [cartMovies, setCartMovies] = useState([]);
   
-  const [library, setLibrary] = useState([1, 2]); // Default owned movies
+  const [library, setLibrary] = useState([]);
   const [playlists, setPlaylists] = useState({
     "Sci-Fi Favorites": [1],
     "Weekend Binge": [2]
@@ -49,15 +49,34 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const fetchLibrary = async () => {
+    const userStr = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+    if (!userStr || !token) return;
+    
+    try {
+      const user = JSON.parse(userStr);
+      const res = await fetch(`${API_BASE}/users/${user.user_id}/library`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setLibrary(data.data.map(m => m.movie_id));
+      }
+    } catch (err) {
+      console.error("Fetch library error:", err);
+    }
+  };
+
   useEffect(() => {
     fetchCart();
+    fetchLibrary();
   }, []);
 
   const addToCart = async (movieId) => {
     const userStr = localStorage.getItem('user');
     const token = localStorage.getItem('token');
     if (!userStr || !token || !cart) {
-      alert("Please login first.");
       return;
     }
 
@@ -74,7 +93,7 @@ export const AppProvider = ({ children }) => {
       if (data.success) {
         fetchCart();
       } else {
-        alert(data.message || "Failed to add to cart");
+        // No alert here
       }
     } catch (err) {
       console.error("Add to cart error:", err);
@@ -128,7 +147,7 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider value={{ 
       cart, cartMovies, setCartMovies, addToCart, removeFromCart, checkout, fetchCart,
-      library, setLibrary, 
+      library, setLibrary, fetchLibrary, 
       playlists, setPlaylists, addToPlaylist, createPlaylist,
       reviews, setReviews, addReview, reportReview 
     }}>

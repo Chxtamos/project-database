@@ -12,7 +12,7 @@ const ManageUsers = () => {
 
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [formData, setFormData] = useState({ username: '', email: '', plan: 'Basic', password: '', telephone: '' });
+  const [formData, setFormData] = useState({ username: '', email: '', password: '', telephone: '' });
 
   const fetchUsers = async () => {
     try {
@@ -36,7 +36,7 @@ const ManageUsers = () => {
   const handleEdit = (idx) => {
     setSelectedId(idx);
     const user = users[idx];
-    setFormData({ username: user.username, email: user.email, plan: user.plan || 'Basic', telephone: user.telephone || '', password: '' });
+    setFormData({ username: user.username, email: user.email, telephone: user.telephone || '', password: '' });
     setIsEditOpen(true);
   };
 
@@ -75,7 +75,7 @@ const ManageUsers = () => {
       });
       fetchUsers();
       setIsAddOpen(false);
-      setFormData({ username: '', email: '', plan: 'Basic', password: '', telephone: '' });
+      setFormData({ username: '', email: '', password: '', telephone: '' });
     } catch (err) {
       console.error(err);
     }
@@ -95,7 +95,6 @@ const ManageUsers = () => {
         body: JSON.stringify({
           username: formData.username,
           email: formData.email,
-          plan: formData.plan,
           telephone: formData.telephone
         })
       });
@@ -108,8 +107,7 @@ const ManageUsers = () => {
 
   const filteredUsers = users.filter(u => 
     (u.username && u.username.toLowerCase().includes(searchTerm.toLowerCase())) || 
-    (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (u.plan && u.plan.toLowerCase().includes(searchTerm.toLowerCase()))
+    (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -142,7 +140,6 @@ const ManageUsers = () => {
               <tr>
                 <th className="px-6 py-4">User Name</th>
                 <th className="px-6 py-4">Email</th>
-                <th className="px-6 py-4">Plan</th>
                 <th className="px-6 py-4">Joined Date</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
@@ -152,15 +149,6 @@ const ManageUsers = () => {
                 <tr key={user.user_id || idx} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 text-gray-600 font-medium cursor-pointer hover:text-figma-blue" onClick={() => handleEdit(idx)}>{user.username}</td>
                   <td className="px-6 py-4 text-gray-600">{user.email}</td>
-                  <td className="px-6 py-4 text-gray-600">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                      user.plan === 'Enterprise' ? 'bg-purple-100 text-purple-700' :
-                      user.plan === 'Premium' ? 'bg-blue-100 text-blue-700' :
-                      'bg-gray-100 text-gray-700'
-                    }`}>
-                      {user.plan || 'Basic'}
-                    </span>
-                  </td>
                   <td className="px-6 py-4 text-gray-600">{user.register_date ? new Date(user.register_date).toLocaleDateString() : '-'}</td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
@@ -193,14 +181,7 @@ const ManageUsers = () => {
             <label className="text-sm font-medium text-gray-700">Password</label>
             <input type="password" required value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" placeholder="••••••••" />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">User Plan</label>
-            <select value={formData.plan} onChange={e => setFormData({...formData, plan: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm">
-              <option value="Basic">Basic</option>
-              <option value="Premium">Premium</option>
-              <option value="Enterprise">Enterprise</option>
-            </select>
-          </div>
+
           <div className="pt-4 flex justify-end gap-3">
             <button type="button" onClick={() => setIsAddOpen(false)} className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-xl transition-colors">Cancel</button>
             <button type="submit" className="px-6 py-2 bg-figma-blue text-white font-bold rounded-xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-200">Save User</button>
@@ -223,14 +204,7 @@ const ManageUsers = () => {
             <input type="password" disabled value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm cursor-not-allowed" placeholder="Cannot update here" />
             <p className="text-xs text-gray-400 mt-1">Passwords are securely hashed in the database and cannot be changed here.</p>
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">User Plan</label>
-            <select value={formData.plan} onChange={e => setFormData({...formData, plan: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm">
-              <option value="Basic">Basic</option>
-              <option value="Premium">Premium</option>
-              <option value="Enterprise">Enterprise</option>
-            </select>
-          </div>
+
           <div className="pt-4 flex justify-end gap-3">
             <button type="button" onClick={() => setIsEditOpen(false)} className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-xl transition-colors">Cancel</button>
             <button type="submit" className="px-6 py-2 bg-figma-blue text-white font-bold rounded-xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-200">Update User</button>

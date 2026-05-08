@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail } from 'lucide-react';
 
 const LoginPage = () => {
@@ -67,7 +67,10 @@ const LoginPage = () => {
             </div>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 ml-1">Password</label>
+            <div className="flex justify-between items-center ml-1">
+              <label className="text-sm font-medium text-gray-700">Password</label>
+              <Link to="/forgot-password" className="text-sm font-semibold text-figma-blue hover:underline">Forgot Password?</Link>
+            </div>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <input 
@@ -84,6 +87,13 @@ const LoginPage = () => {
             Log In
           </button>
         </form>
+
+        <div className="mt-8 text-center text-sm text-gray-600">
+          Don't have an account?{' '}
+          <Link to="/register" className="text-figma-blue font-semibold hover:underline">
+            Sign up now
+          </Link>
+        </div>
       </div>
     </div>
   );
