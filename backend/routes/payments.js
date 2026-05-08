@@ -1,9 +1,65 @@
 const express = require('express');
 const pool = require('../db');
 const { authMiddleware } = require('../middleware/auth');
+const multer = require('multer');
+const axios = require('axios');
+const FormData = require('form-data');
 
 const router = express.Router();
 const PAYMENT_QR_REF = '/qr_codes/promptpay_qr.jpg';
+
+const upload = multer({ storage: multer.memoryStorage() });
+
+// ─────────────────────────────────────────────
+// POST /api/payments/verify-slip
+// ตรวจสอบสลิปกับ EasySlip API
+// ─────────────────────────────────────────────
+router.post('/verify-slip', authMiddleware, upload.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'กรุณาแนบไฟล์สลิป' });
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('file', req.file.buffer, {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype,
+    });
+
+    const apiKey = process.env.EASYSLIP_API_KEY;
+    if (!apiKey || apiKey === 'YOUR_EASYSLIP_API_KEY_HERE') {
+      return res.status(500).json({ success: false, message: 'ระบบยังไม่ได้ตั้งค่า EASYSLIP_API_KEY' });
+    }
+
+    const response = await axios.post('https://developer.easyslip.com/api/v1/verify', formData, {
+      headers: {
+        ...formData.getHeaders(),
+        Authorization: `Bearer ${apiKey}`,
+      },
+    });
+
+    if (response.data && response.data.status === 200) {
+      return res.json({
+        success: true,
+        message: 'สลิปถูกต้อง',
+        data: response.data.data
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'สลิปไม่ถูกต้อง หรือไม่สามารถตรวจสอบได้',
+        error: response.data
+      });
+    }
+  } catch (err) {
+    console.error('Verify slip error:', err.response ? err.response.data : err.message);
+    res.status(500).json({
+      success: false,
+      message: 'ไม่สามารถตรวจสอบสลิปได้ (API Error)',
+      error: err.response ? err.response.data : null
+    });
+  }
+});
 
 // ─────────────────────────────────────────────
 // GET /api/payments

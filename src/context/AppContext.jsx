@@ -93,10 +93,11 @@ export const AppProvider = ({ children }) => {
       if (data.success) {
         fetchCart();
       } else {
-        // No alert here
+        alert(data.message || 'เกิดข้อผิดพลาดในการเพิ่มลงตะกร้า');
       }
     } catch (err) {
       console.error("Add to cart error:", err);
+      alert('เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์');
     }
   };
 

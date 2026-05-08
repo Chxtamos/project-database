@@ -1,9 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import UserLayout from '../../components/UserLayout';
 import { Upload, CheckCircle, AlertCircle, Image, ArrowLeft, Loader2, X } from 'lucide-react';
-import qrImage from '../../assets/qr_payment.png';
 import { useApp } from '../../context/AppContext';
+import generatePayload from 'promptpay-qr';
+import { QRCodeSVG } from 'qrcode.react';
 
 const API_BASE = 'http://localhost:5000/api';
 
@@ -15,10 +16,15 @@ const Checkout = () => {
   // Amount comes from cart total via navigation state or context
   const total = location.state?.total ?? cartMovies.reduce((s, m) => s + parseFloat(m.movie_cost || 0), 0);
 
+  // Generate PromptPay QR payload
+  const promptpayId = '0812345678'; // เปลี่ยนเป็นเบอร์พร้อมเพย์ หรือ เลขบัตรปชช. ของร้านค้าได้เลย
+  const qrPayload = useMemo(() => generatePayload(promptpayId, { amount: total }), [total, promptpayId]);
+
   const [slip, setSlip] = useState(null);
   const [preview, setPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [autoApproved, setAutoApproved] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef();
 
@@ -68,6 +74,9 @@ const Checkout = () => {
       const data = await res.json();
       if (data.success) {
         setSuccess(true);
+        if (data.autoApproved) {
+          setAutoApproved(true);
+        }
         // Reset cart state so user gets a fresh cart for next purchase
         await resetCart();
       } else {
@@ -88,13 +97,28 @@ const Checkout = () => {
           <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle size={48} className="text-green-500" />
           </div>
-          <h1 className="text-3xl font-black text-gray-900 mb-3">ส่งหลักฐานสำเร็จ!</h1>
-          <p className="text-gray-500 text-lg mb-2">ระบบได้รับหลักฐานการโอนเงินของคุณแล้ว</p>
-          <p className="text-gray-400 text-sm mb-8">กรุณารอผู้ดูแลระบบยืนยันการชำระเงิน (ภายใน 24 ชั่วโมง)</p>
-          <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-4 mb-8">
-            <p className="text-yellow-700 font-bold text-sm">⏳ รอการยืนยันจาก Admin</p>
-            <p className="text-yellow-600 text-xs mt-1">หนังจะถูกเพิ่มเข้า My Library หลังจาก Admin อนุมัติการชำระเงินเรียบร้อยแล้ว</p>
-          </div>
+
+          {autoApproved ? (
+            <>
+              <h1 className="text-3xl font-black text-gray-900 mb-3">ชำระเงินสำเร็จ!</h1>
+              <p className="text-gray-500 text-lg mb-2">สลิปได้รับการตรวจสอบและอนุมัติอัตโนมัติ</p>
+              <div className="bg-green-50 border border-green-100 rounded-2xl p-4 mb-8">
+                <p className="text-green-700 font-bold text-sm">✅ พร้อมดูหนังได้เลย!</p>
+                <p className="text-green-600 text-xs mt-1">หนังถูกเพิ่มเข้า My Library ของคุณเรียบร้อยแล้ว</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl font-black text-gray-900 mb-3">ส่งหลักฐานสำเร็จ!</h1>
+              <p className="text-gray-500 text-lg mb-2">ระบบได้รับหลักฐานการโอนเงินของคุณแล้ว</p>
+              <p className="text-gray-400 text-sm mb-8">กรุณารอผู้ดูแลระบบยืนยันการชำระเงิน (ภายใน 24 ชั่วโมง)</p>
+              <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-4 mb-8">
+                <p className="text-yellow-700 font-bold text-sm">⏳ รอการยืนยันจาก Admin</p>
+                <p className="text-yellow-600 text-xs mt-1">หนังจะถูกเพิ่มเข้า My Library หลังจาก Admin อนุมัติการชำระเงินเรียบร้อยแล้ว</p>
+              </div>
+            </>
+          )}
+
           <div className="flex gap-3 justify-center">
             <button
               onClick={() => navigate('/user/library')}
@@ -127,8 +151,8 @@ const Checkout = () => {
             <h2 className="text-xl font-black text-gray-900 mb-1">สแกนเพื่อชำระเงิน</h2>
             <p className="text-sm text-gray-400 mb-6">PromptPay / QR Code Payment</p>
 
-            <div className="w-56 h-56 border-4 border-figma-blue rounded-2xl overflow-hidden shadow-lg mb-5">
-              <img src={qrImage} alt="QR Code Payment" className="w-full h-full object-contain" />
+            <div className="w-56 h-56 border-4 border-figma-blue rounded-2xl overflow-hidden shadow-lg mb-5 flex items-center justify-center bg-white p-2">
+              <QRCodeSVG value={qrPayload} size={200} />
             </div>
 
             <div className="text-center mb-4">

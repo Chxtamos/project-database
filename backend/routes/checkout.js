@@ -1,6 +1,9 @@
 const express = require('express');
 const multer  = require('multer');
 const path    = require('path');
+const fs      = require('fs');
+const axios   = require('axios');
+const FormData = require('form-data');
 const pool    = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 
@@ -72,24 +75,102 @@ router.post('/', authMiddleware, upload.single('slip'), async (req, res) => {
     );
     const slip = slipResult.rows[0];
 
-    // 2. Create payment record (status 0 = pending, waiting admin approve)
+    // ==========================================
+    // EasySlip Verification
+    // ==========================================
+    let paymentStatus = 0; // 0 = pending
+    let isAutoApproved = false;
+    let easySlipMessage = '';
+
+    try {
+      const apiKey = process.env.EASYSLIP_API_KEY;
+      if (apiKey && apiKey !== 'YOUR_EASYSLIP_API_KEY_HERE') {
+        const formData = new FormData();
+        formData.append('file', fs.createReadStream(req.file.path));
+
+        const response = await axios.post('https://developer.easyslip.com/api/v1/verify', formData, {
+          headers: {
+            ...formData.getHeaders(),
+            Authorization: `Bearer ${apiKey}`,
+          },
+        });
+
+        if (response.data && response.data.status === 200) {
+          const slipData = response.data.data;
+          
+          // ตรวจสอบยอดเงินว่าตรงกับที่ซื้อหรือไม่ (อนุโลมให้ถ้าโอนมามากกว่าหรือเท่ากับ)
+          if (slipData.amount.amount >= parseFloat(amount)) {
+            paymentStatus = 1; // 1 = success
+            isAutoApproved = true;
+          } else {
+            // ยอดเงินไม่พอ
+            await client.query('ROLLBACK');
+            return res.status(400).json({ success: false, message: `ยอดเงินในสลิป (${slipData.amount.amount} บาท) ไม่ตรงกับราคาสินค้า (${amount} บาท)` });
+          }
+        } else {
+          // สลิปปลอม หรือตรวจสอบไม่ผ่าน
+          await client.query('ROLLBACK');
+          return res.status(400).json({ success: false, message: 'สลิปไม่ถูกต้อง หรือไม่สามารถตรวจสอบได้' });
+        }
+      }
+    } catch (apiErr) {
+      console.error('EasySlip API Error:', apiErr.response ? apiErr.response.data : apiErr.message);
+      
+      const apiErrorData = apiErr.response ? apiErr.response.data : null;
+      
+      // หากเกิดข้อผิดพลาด 4xx จาก EasySlip (เช่น สลิปปลอม, อ่านไม่ออก, สลิปซ้ำ) ให้บล็อกทันที ไม่ยอมให้ผ่าน
+      if (apiErr.response && apiErr.response.status >= 400 && apiErr.response.status < 500) {
+        await client.query('ROLLBACK');
+        let errMsg = 'ตรวจสอบพบสลิปมีปัญหา';
+        if (apiErrorData && apiErrorData.message) errMsg += ': ' + apiErrorData.message;
+        
+        return res.status(400).json({ 
+          success: false, 
+          message: errMsg,
+          errorDetail: apiErrorData
+        });
+      }
+
+      // หาก API ล่ม (5xx) ให้ข้ามไปใช้ระบบรอ Admin ตรวจสอบแทน (Fallback to Manual)
+      paymentStatus = 0;
+      easySlipMessage = 'ระบบตรวจสอบสลิปอัตโนมัติขัดข้อง เปลี่ยนเป็นระบบรอ Admin ตรวจสอบ';
+    }
+
+    // 2. Create payment record (status = 1 if auto-approved, 0 if pending)
     const paymentResult = await client.query(
-      `INSERT INTO public.payment (user_id, cart_id, amount, slip_id, qr_ref, status, payment_date, expired_at)
-       VALUES ($1, $2, $3, $4, $5, 0, NOW(), NOW() + INTERVAL '24 hours') RETURNING *`,
-      [user_id, cart_id, parseFloat(amount), slip.slip_id, PAYMENT_QR_REF]
+      `INSERT INTO public.payment (user_id, cart_id, amount, slip_id, qr_ref, status, payment_date, expired_at, completed_at)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW() + INTERVAL '24 hours', ${isAutoApproved ? 'NOW()' : 'NULL'}) RETURNING *`,
+      [user_id, cart_id, parseFloat(amount), slip.slip_id, PAYMENT_QR_REF, paymentStatus]
     );
 
+    // 3. ถ้าอนุมัติอัตโนมัติ ให้เพิ่มหนังเข้า Library และลบตะกร้าทิ้งทันที!
+    if (isAutoApproved) {
+      const cartMovies = await client.query(`SELECT movie_id FROM public.cart_movies WHERE cart_id = $1`, [cart_id]);
+      
+      for (const row of cartMovies.rows) {
+        await client.query(
+          `INSERT INTO public.library (user_id, movie_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+          [user_id, row.movie_id]
+        );
+      }
+
+      await client.query(`DELETE FROM public.cart_movies WHERE cart_id = $1`, [cart_id]);
+    }
+
     await client.query('COMMIT');
+    
     res.status(201).json({
       success: true,
-      message: 'ส่งหลักฐานการโอนเงินสำเร็จ กรุณารอการยืนยันจากผู้ดูแลระบบ',
+      message: isAutoApproved ? 'ชำระเงินสำเร็จ หนังถูกเพิ่มเข้า Library แล้ว!' : 'ส่งหลักฐานสำเร็จ กรุณารอการยืนยัน',
+      autoApproved: isAutoApproved,
+      warning: easySlipMessage || undefined,
       payment: paymentResult.rows[0],
       slip: slip
     });
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Checkout error:', err.message);
-    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
+    res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ'});
   } finally {
     client.release();
   }
