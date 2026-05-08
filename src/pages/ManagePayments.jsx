@@ -91,6 +91,12 @@ const ManagePayments = () => {
     return `http://localhost:5000${slipPath}`;
   };
 
+  const getQrUrl = (qrRef) => {
+    if (!qrRef) return null;
+    if (qrRef.startsWith('http')) return qrRef;
+    return qrRef;
+  };
+
   const filteredPayments = payments.filter(p => {
     const q = searchTerm.toLowerCase();
     return (
@@ -264,6 +270,19 @@ const ManagePayments = () => {
                 </div>
               ))}
             </div>
+
+            {selectedPayment.qr_ref && (
+              <div>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Payment QR</p>
+                <a href={getQrUrl(selectedPayment.qr_ref)} target="_blank" rel="noopener noreferrer" className="block">
+                  <img
+                    src={getQrUrl(selectedPayment.qr_ref)}
+                    alt="Payment QR"
+                    className="max-h-48 mx-auto object-contain rounded-xl border border-gray-100 bg-gray-50"
+                  />
+                </a>
+              </div>
+            )}
 
             {/* Action Buttons (only for pending) */}
             {selectedPayment.status === 0 && (

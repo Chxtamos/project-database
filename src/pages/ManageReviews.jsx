@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import Modal from '../components/Modal';
 import ConfirmModal from '../components/ConfirmModal';
-import { Pencil, Trash2, Search, Filter } from 'lucide-react';
+import { Trash2, Search, Filter, Flag } from 'lucide-react';
 
 const ManageReviews = () => {
-  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
+  const [selectedReview, setSelectedReview] = useState(null);
 
   const [reviews, setReviews] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [formData, setFormData] = useState({ movie_id: '', user_id: '', rating: 5, comment: '', review_number: 1 });
 
   const fetchReviews = async () => {
     try {
@@ -32,69 +29,38 @@ const ManageReviews = () => {
     fetchReviews();
   }, []);
 
-  const handleEdit = (idx) => {
-    setSelectedId(idx);
-    const rev = reviews[idx];
-    setFormData({ 
-      movie_id: rev.movie_id, 
-      user_id: rev.user_id, 
-      rating: rev.rating, 
-      comment: rev.comment || '', 
-      review_number: rev.review_number 
-    });
-    setIsEditOpen(true);
-  };
-
-  const handleDelete = (idx) => {
-    setSelectedId(idx);
+  const handleDelete = (review) => {
+    setSelectedReview(review);
     setIsDeleteOpen(true);
   };
 
   const confirmDelete = async () => {
+    if (!selectedReview?.review_id) return;
+
     try {
       const token = localStorage.getItem('token');
-      const reviewToDelete = reviews[selectedId];
-      await fetch(`http://localhost:5000/api/reviews/${reviewToDelete.review_id}`, {
+      const res = await fetch(`http://localhost:5000/api/reviews/${selectedReview.review_id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      fetchReviews();
-      setIsDeleteOpen(false);
+      const data = await res.json();
+      if (data.success) {
+        fetchReviews();
+        setSelectedReview(null);
+        setIsDeleteOpen(false);
+      } else {
+        alert(data.message || 'Delete review failed');
+      }
     } catch (err) {
       console.error(err);
+      alert('Delete review failed');
     }
   };
-
-
-
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem('token');
-      const reviewToEdit = reviews[selectedId];
-      await fetch(`http://localhost:5000/api/reviews/${reviewToEdit.review_id}`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
-        },
-        body: JSON.stringify({
-          rating: formData.rating,
-          comment: formData.comment,
-          review_number: formData.review_number
-        })
-      });
-      fetchReviews();
-      setIsEditOpen(false);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const filteredReviews = reviews.filter(r => 
     (r.movie_name && r.movie_name.toLowerCase().includes(searchTerm.toLowerCase())) || 
     (r.username && r.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (r.comment && r.comment.toLowerCase().includes(searchTerm.toLowerCase()))
+    (r.comment && r.comment.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (r.report_count > 0 && 'reported'.includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -126,22 +92,38 @@ const ManageReviews = () => {
                 <th className="px-6 py-4">User</th>
                 <th className="px-6 py-4">Rating</th>
                 <th className="px-6 py-4">Date</th>
+                <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredReviews.map((review, idx) => (
                 <tr key={review.review_id || idx} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-gray-600 font-medium cursor-pointer hover:text-figma-blue" onClick={() => handleEdit(idx)}>{review.movie_name}</td>
+                  <td className="px-6 py-4 text-gray-600 font-medium">{review.movie_name}</td>
                   <td className="px-6 py-4 text-gray-600">{review.username}</td>
                   <td className="px-6 py-4 text-gray-600 font-bold text-yellow-500">{review.rating} / 5</td>
                   <td className="px-6 py-4 text-gray-600">{new Date(review.date_review).toLocaleDateString()}</td>
+                  <td className="px-6 py-4">
+                    {review.report_count > 0 ? (
+                      <div className="inline-flex flex-col gap-1">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-600 border border-red-100 rounded-full text-xs font-bold">
+                          <Flag size={12} /> Reported ({review.report_count})
+                        </span>
+                        {review.report_reporters && (
+                          <span className="text-[11px] text-gray-400 max-w-[180px] truncate" title={review.report_reporters}>
+                            by {review.report_reporters}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="inline-flex px-2.5 py-1 bg-gray-50 text-gray-400 border border-gray-100 rounded-full text-xs font-bold">
+                        Normal
+                      </span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <button onClick={() => handleEdit(idx)} className="p-2 text-figma-blue bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 font-medium">
-                        <Pencil size={16} /> Edit
-                      </button>
-                      <button onClick={() => handleDelete(idx)} className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-1 font-medium">
+                      <button onClick={() => handleDelete(review)} className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-1 font-medium">
                         <Trash2 size={16} /> Delete
                       </button>
                     </div>
@@ -150,7 +132,7 @@ const ManageReviews = () => {
               ))}
               {filteredReviews.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="px-6 py-10 text-center text-gray-500">
+                  <td colSpan="6" className="px-6 py-10 text-center text-gray-500">
                     No reviews found.
                   </td>
                 </tr>
@@ -160,26 +142,13 @@ const ManageReviews = () => {
         </div>
       </div>
 
-
-
-      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit Review Detail">
-        <form className="space-y-4" onSubmit={handleEditSubmit}>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Rating (1-5)</label>
-            <input type="number" min="1" max="5" step="0.1" required value={formData.rating} onChange={e => setFormData({...formData, rating: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Comment</label>
-            <textarea required value={formData.comment} onChange={e => setFormData({...formData, comment: e.target.value})} className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" rows="3"></textarea>
-          </div>
-          <div className="pt-4 flex justify-end gap-3">
-            <button type="button" onClick={() => setIsEditOpen(false)} className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-xl transition-colors">Cancel</button>
-            <button type="submit" className="px-6 py-2 bg-figma-blue text-white font-bold rounded-xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-200" >Update Review</button>
-          </div>
-        </form>
-      </Modal>
-
-      <ConfirmModal isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} onConfirm={confirmDelete} title="Delete Review" message="Are you sure you want to delete this review? This action cannot be undone." />
+      <ConfirmModal
+        isOpen={isDeleteOpen}
+        onClose={() => { setIsDeleteOpen(false); setSelectedReview(null); }}
+        onConfirm={confirmDelete}
+        title="Delete Review"
+        message="Are you sure you want to delete this review? This action cannot be undone."
+      />
     </Layout>
   );
 };

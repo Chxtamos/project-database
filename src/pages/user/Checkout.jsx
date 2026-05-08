@@ -2,10 +2,10 @@ import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import UserLayout from '../../components/UserLayout';
 import { Upload, CheckCircle, AlertCircle, Image, ArrowLeft, Loader2, X } from 'lucide-react';
-import qrImage from '../../assets/qr_payment.png';
 import { useApp } from '../../context/AppContext';
 
 const API_BASE = 'http://localhost:5000/api';
+const PAYMENT_QR_REF = '/qr_codes/promptpay_qr.jpg';
 
 const Checkout = () => {
   const location = useLocation();
@@ -127,8 +127,8 @@ const Checkout = () => {
             <h2 className="text-xl font-black text-gray-900 mb-1">สแกนเพื่อชำระเงิน</h2>
             <p className="text-sm text-gray-400 mb-6">PromptPay / QR Code Payment</p>
 
-            <div className="w-56 h-56 border-4 border-figma-blue rounded-2xl overflow-hidden shadow-lg mb-5">
-              <img src={qrImage} alt="QR Code Payment" className="w-full h-full object-contain" />
+            <div className="w-76 h-76 border-4 border-figma-blue rounded-2xl overflow-hidden shadow-lg mb-5">
+              <img src={PAYMENT_QR_REF} alt="QR Code Payment" className="w-full h-full object-contain" />
             </div>
 
             <div className="text-center mb-4">
@@ -165,29 +165,29 @@ const Checkout = () => {
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all min-h-[220px] ${
+                className={`border-2 border-dashed rounded-2xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all w-[19rem] h-[19rem] mx-auto ${
                   preview
                     ? 'border-figma-blue bg-blue-50'
                     : 'border-gray-200 bg-gray-50 hover:border-figma-blue hover:bg-blue-50'
                 }`}
               >
                 {preview ? (
-                  <div className="relative w-full">
-                    <img src={preview} alt="Slip preview" className="max-h-48 mx-auto object-contain rounded-xl" />
+                  <div className="relative w-full h-full flex flex-col items-center justify-center">
+                    <img src={preview} alt="Slip preview" className="max-h-40 max-w-full object-contain rounded-xl" />
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setSlip(null); setPreview(null); }}
-                      className="absolute top-0 right-0 -mt-2 -mr-2 bg-white border border-gray-200 rounded-full p-1 shadow hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                      className="absolute top-0 right-0 -mt-2 -mr-2 bg-white border border-gray-200 rounded-full p-1 shadow hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors z-10"
                     >
                       <X size={14} />
                     </button>
-                    <p className="text-center text-xs text-gray-400 mt-3">{slip?.name}</p>
+                    <p className="text-center text-xs text-gray-400 mt-2 truncate w-full">{slip?.name}</p>
                   </div>
                 ) : (
                   <>
                     <Image size={40} className="text-gray-300 mb-3" />
-                    <p className="font-bold text-gray-500 text-sm">ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</p>
-                    <p className="text-xs text-gray-400 mt-1">รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 10MB</p>
+                    <p className="font-bold text-gray-500 text-sm text-center">ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</p>
+                    <p className="text-xs text-gray-400 mt-2 text-center">รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 10MB</p>
                   </>
                 )}
               </div>

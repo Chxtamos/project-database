@@ -8,7 +8,7 @@ const API_BASE = 'http://localhost:5000/api';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { addToCart, library } = useApp();
+  const { addToCart, library, fetchLibrary, fetchCart } = useApp();
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,7 +26,12 @@ const Home = () => {
         setLoading(false);
       }
     };
+    
+    // Refresh all data when landing on Home
     fetchMovies();
+    if (fetchLibrary) fetchLibrary();
+    if (fetchCart) fetchCart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getPosterSrc = (path) => {

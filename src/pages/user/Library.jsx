@@ -18,7 +18,10 @@ const Library = () => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
-      if (data.success) setMovies(data.data);
+      if (data.success) {
+        const sortedData = data.data.sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0));
+        setMovies(sortedData);
+      }
     } catch (err) {
       console.error('Fetch library error:', err);
     } finally {

@@ -56,7 +56,7 @@ export const AppProvider = ({ children }) => {
     
     try {
       const user = JSON.parse(userStr);
-      const res = await fetch(`${API_BASE}/users/${user.user_id}/library`, {
+      const res = await fetch(`${API_BASE}/library/${user.user_id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -77,7 +77,7 @@ export const AppProvider = ({ children }) => {
     const userStr = localStorage.getItem('user');
     const token = localStorage.getItem('token');
     if (!userStr || !token || !cart) {
-      return;
+      return { success: false, message: 'Please login first.' };
     }
 
     try {
@@ -91,12 +91,12 @@ export const AppProvider = ({ children }) => {
       });
       const data = await res.json();
       if (data.success) {
-        fetchCart();
-      } else {
-        // No alert here
+        await fetchCart();
       }
+      return data;
     } catch (err) {
       console.error("Add to cart error:", err);
+      return { success: false, message: 'Could not add this movie to cart.' };
     }
   };
 
