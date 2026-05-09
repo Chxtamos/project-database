@@ -96,7 +96,7 @@ const Playlists = () => {
               {/* ไอคอน + ชื่อ + จำนวนหนัง */}
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-12 bg-figma-blue text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-100 flex-shrink-0">
-                  <Play size={22} fill="currentColor" />
+                  <ListMusic size={22} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-lg truncate">{pl.playlist_name}</h3>

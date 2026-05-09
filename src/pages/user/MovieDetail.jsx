@@ -169,6 +169,10 @@ const MovieDetail = () => {
     );
   }
 
+  const genreNames = (movie.genres || [])
+    .map(genre => genre?.genre_name || genre)
+    .filter(Boolean);
+
   return (
     <UserLayout>
       <div className="flex flex-col lg:flex-row gap-12">
@@ -186,9 +190,9 @@ const MovieDetail = () => {
                 <span className="ml-1.5 font-bold text-yellow-700">{movie.movie_rating || 'N/A'}</span>
               </div>
               <span className="text-gray-500 text-sm font-medium">{reviews.length} Reviews</span>
-              {movie.genres && movie.genres.map(g => (
-                <span key={g.genre_id} className="px-3 py-1 bg-blue-50 text-figma-blue rounded-full text-xs font-bold border border-blue-100">
-                  {g.genre_name}
+              {genreNames.map(genreName => (
+                <span key={genreName} className="px-3 py-1 bg-blue-50 text-figma-blue rounded-full text-xs font-bold border border-blue-100">
+                  {genreName}
                 </span>
               ))}
             </div>
@@ -207,6 +211,11 @@ const MovieDetail = () => {
                 <p className="text-gray-600 text-sm">
                   <strong>Released Date:</strong> {new Date(movie.movie_releasedate).toLocaleDateString()}
                 </p>
+                {genreNames.length > 0 && (
+                  <p className="text-gray-600 text-sm">
+                    <strong>Genre:</strong> {genreNames.join(', ')}
+                  </p>
+                )}
                 {movie.actors && movie.actors.length > 0 && (
                   <p className="text-gray-600 text-sm">
                     <strong>Cast:</strong> {movie.actors.map(a => a.actor_name).join(', ')}
