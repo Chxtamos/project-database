@@ -27,23 +27,51 @@ router.get('/', authMiddleware, async (req, res) => {
 
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const countResult = await pool.query(`SELECT COUNT(*) FROM public.users ${where}`, values);
+    const adminsResult = await pool.query(`
+      SELECT
+        admin_id AS user_id,
+        admin_id AS account_id,
+        username,
+        email,
+        NULL::varchar AS telephone,
+        created_at AS register_date,
+        'admin' AS role
+      FROM public.admins
+      ORDER BY created_at DESC
+    `);
+    const adminRows = search
+      ? adminsResult.rows.filter(admin =>
+          [admin.username, admin.email, admin.role, String(admin.user_id)]
+            .some(value => String(value || '').toLowerCase().includes(String(search).toLowerCase()))
+        )
+      : adminsResult.rows;
     const total = parseInt(countResult.rows[0].count);
 
     values.push(parseInt(limit), offset);
-    const result = await pool.query(
-      `SELECT user_id, username, email, telephone, register_date
+    const usersResult = await pool.query(
+      `SELECT
+         user_id,
+         user_id AS account_id,
+         username,
+         email,
+         telephone,
+         register_date,
+         'user' AS role
        FROM public.users ${where}
        ORDER BY register_date DESC
        LIMIT $${idx} OFFSET $${idx + 1}`,
       values
     );
+    const data = [...adminRows, ...usersResult.rows].sort(
+      (a, b) => new Date(b.register_date || 0) - new Date(a.register_date || 0)
+    );
 
     res.json({
       success: true,
-      total,
+      total: total + adminRows.length,
       page: parseInt(page),
-      totalPages: Math.ceil(total / parseInt(limit)),
-      data: result.rows,
+      totalPages: Math.ceil((total + adminRows.length) / parseInt(limit)),
+      data,
     });
   } catch (err) {
     console.error('Get users error:', err.message);

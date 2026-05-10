@@ -133,7 +133,8 @@ INSERT INTO "cart" ("cart_id", "user_id", "created_at", "updated_at") VALUES
 (22,	14,	'2026-05-08 18:22:50.98506',	'2026-05-08 18:22:50.98506'),
 (23,	14,	'2026-05-08 18:24:54.093273',	'2026-05-08 18:24:54.093273'),
 (24,	14,	'2026-05-08 18:51:02.489668',	'2026-05-08 18:51:02.489668'),
-(25,	16,	'2026-05-09 12:56:03.20079',	'2026-05-09 12:56:03.20079');
+(25,	16,	'2026-05-09 12:56:03.20079',	'2026-05-09 12:56:03.20079'),
+(26,	13,	'2026-05-10 05:55:27.824235',	'2026-05-10 05:55:27.824235');
 
 DELIMITER ;;
 
@@ -203,15 +204,16 @@ INSERT INTO "library" ("library_id", "user_id", "movie_id", "favorite") VALUES
 (9,	1,	9,	'0'),
 (11,	14,	10,	'0'),
 (13,	14,	5,	'0'),
-(15,	14,	7,	'0'),
-(16,	14,	13,	'0'),
-(10,	14,	9,	'0'),
 (12,	14,	6,	'0'),
 (14,	14,	4,	'0'),
-(17,	14,	11,	'0'),
 (18,	16,	11,	'0'),
 (19,	16,	10,	'0'),
-(20,	16,	9,	'0');
+(20,	16,	9,	'0'),
+(21,	13,	11,	'0'),
+(17,	14,	11,	'1'),
+(10,	14,	9,	'1'),
+(16,	14,	13,	'1'),
+(15,	14,	7,	'1');
 
 DROP TABLE IF EXISTS "movie_actor";
 CREATE TABLE "public"."movie_actor" (
@@ -222,8 +224,6 @@ CREATE TABLE "public"."movie_actor" (
 WITH (oids = false);
 
 INSERT INTO "movie_actor" ("movie_id", "actor_id") VALUES
-(12,	7),
-(12,	13),
 (9,	9),
 (9,	21),
 (8,	8),
@@ -241,15 +241,17 @@ INSERT INTO "movie_actor" ("movie_id", "actor_id") VALUES
 (10,	8),
 (10,	9),
 (10,	10),
-(13,	6),
-(13,	7),
 (11,	22),
 (11,	23),
 (4,	15),
 (3,	14),
 (2,	13),
 (11,	24),
-(11,	12);
+(11,	12),
+(13,	6),
+(13,	7),
+(12,	7),
+(12,	13);
 
 DROP TABLE IF EXISTS "movie_author";
 CREATE TABLE "public"."movie_author" (
@@ -261,16 +263,16 @@ WITH (oids = false);
 
 INSERT INTO "movie_author" ("movie_id", "author_id") VALUES
 (10,	6),
-(13,	6),
 (11,	6),
 (11,	15),
+(13,	6),
+(12,	6),
+(12,	9),
+(12,	10),
 (4,	1),
 (3,	1),
 (2,	7),
 (2,	8),
-(12,	6),
-(12,	9),
-(12,	10),
 (9,	6),
 (9,	14),
 (8,	4),
@@ -299,15 +301,15 @@ INSERT INTO "movie_genre" ("movie_id", "genre_id") VALUES
 (1,	4),
 (10,	2),
 (10,	6),
+(11,	1),
 (13,	1),
 (13,	3),
 (13,	4),
 (13,	6),
-(11,	1),
+(12,	1),
 (4,	1),
 (3,	4),
-(2,	4),
-(12,	1);
+(2,	4);
 
 DROP TABLE IF EXISTS "movies";
 DROP SEQUENCE IF EXISTS "public".movies_movie_id_seq;
@@ -322,28 +324,30 @@ CREATE TABLE "public"."movies" (
     "movie_poster" text DEFAULT 'https://example.com/default-poster.png' NOT NULL,
     "detail" text NOT NULL,
     "video_url" text,
+    "movie_status" text DEFAULT 'active' NOT NULL,
+    "screening_expires_at" timestamp,
     CONSTRAINT "movies_pkey" PRIMARY KEY ("movie_id")
 )
 WITH (oids = false);
 
-INSERT INTO "movies" ("movie_id", "movie_name", "movie_cost", "movie_rating", "movie_releasedate", "movie_poster", "detail", "video_url") VALUES
-(7,	'Forrest Gump',	79.00,	NULL,	'1994-07-02',	'https://www.themoviedb.org/t/p/w600_and_h900_face/Cw4hIUIAmSYfK9QfaUW5igp9La.jpg',	'A man with a low IQ has accomplished great things in his life and been present during significant historic events—in each case, far exceeding what anyone imagined he could do. But despite all he has achieved, his one true love eludes him.',	'https://vimeo.com/1190578734?fl=pl&fe=sh'),
+INSERT INTO "movies" ("movie_id", "movie_name", "movie_cost", "movie_rating", "movie_releasedate", "movie_poster", "detail", "video_url", "movie_status", "screening_expires_at") VALUES
+(7,	'Forrest Gump',	79.00,	NULL,	'1994-07-02',	'https://www.themoviedb.org/t/p/w600_and_h900_face/Cw4hIUIAmSYfK9QfaUW5igp9La.jpg',	'A man with a low IQ has accomplished great things in his life and been present during significant historic events—in each case, far exceeding what anyone imagined he could do. But despite all he has achieved, his one true love eludes him.',	'https://vimeo.com/1190578734?fl=pl&fe=sh',	'active',	NULL),
+(8,	'Titanic(remake)',	109.00,	5,	'1997-12-10',	'https://img2.pic.in.th/55619.jpg',	'Set against the ill-fated maiden voyage of the R.M.S. Titanic, Lui and Tonnam find a connection that transcends social boundaries. Amidst the grandeur of the ''unsinkable'' ship, their brief but intense romance defies the odds, proving that even in the face of an impending tragedy, love remains the ultimate anchor of the soul.',	'https://vimeo.com/1190583996?fl=pl&fe=sh',	'active',	NULL),
 (10,	'รักสามเศร้า เราคำหนึ่ง',	1.00,	5,	'2026-02-11',	'https://img1.pic.in.th/images/Gemini_Generated_Image_2cwahb2cwahb2cwa.png',	'เรื่องราวของมิตรภาพอันแน่นแฟ้นระหว่างสามเพื่อนซี้ พี (คนซ้ายสุด) หนุ่มแว่นมาดนิ่ง, มอส (คนกลาง) เพื่อนผู้สดใส และ ลุ้ย (คนขวาสุด) ชายหนุ่มที่ดูเหมือนจะไม่มีพิษมีภัย แต่ทว่าความเชื่อใจที่สั่งสมมานานกลับต้องพังทลายลงในมื้ออาหารเพียงมื้อเดียว!
 
 เมื่อความหิวครอบงำจนหน้ามืดบอด ลุ้ย ตัดสินใจก่อคดีอาชญากรรมทางโภชนาการด้วยการ "แอบกินข้าว" ของพีและมอสจนเกลี้ยงจาน ความลับที่ถูกซ่อนไว้ภายใต้รอยยิ้มถูดเปิดโปง นำไปสู่มหากาพย์ความโกรธแค้นที่สั่นสะเทือนไปทั้งกลุ่มเพื่อน
 
-ท่ามกลางบรรยากาศที่มาคุและการเผชิญหน้าเพื่อทวงคืนความยุติธรรมให้กับอาหารที่จากไป พวกเขาต้องเรียนรู้ที่จะให้อภัยและแบ่งปัน จนกลายเป็นที่มาของวลีในตำนานที่ผูกมัดใจพวกเขาไว้ว่า "เราคำหนึ่ง" — คำพูดสั้นๆ ที่เต็มไปด้วยความหมาย (และความหิว) ที่จะทำให้คุณรู้ว่า มิตรภาพที่แท้จริง... บางครั้งก็วัดกันที่ข้าวแค่คำเดียว',	'https://vimeo.com/1190705421?share=copy&fl=sv&fe=ci'),
-(5,	'Avengers: Endgame',	159.00,	NULL,	'2019-04-19',	'https://www.themoviedb.org/t/p/w600_and_h900_face/ulzhLuWrPK07P1YkdWQLZnQh1JL.jpg',	'After the devastating events of Avengers: Infinity War, the universe is in ruins due to the efforts of the Mad Titan, Thanos. With the help of remaining allies, the Avengers must assemble once more in order to undo Thanos'' actions and restore order to the universe once and for all, no matter what consequences may be in store.',	'https://vimeo.com/1190562626?share=copy&fl=sv&fe=ci'),
-(6,	'Parasite',	89.00,	NULL,	'2019-05-23',	'https://www.themoviedb.org/t/p/w600_and_h900_face/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg',	'All unemployed, Ki-taek''s family takes peculiar interest in the wealthy and glamorous Parks for their livelihood until they get entangled in an unexpected incident.',	'https://vimeo.com/1190585627?fl=pl&fe=sh'),
-(8,	'Titanic(remake)',	109.00,	NULL,	'1997-12-10',	'https://img2.pic.in.th/55619.jpg',	'Set against the ill-fated maiden voyage of the R.M.S. Titanic, Lui and Tonnam find a connection that transcends social boundaries. Amidst the grandeur of the ''unsinkable'' ship, their brief but intense romance defies the odds, proving that even in the face of an impending tragedy, love remains the ultimate anchor of the soul.',	'https://vimeo.com/1190583996?fl=pl&fe=sh'),
-(1,	'Inception',	129.00,	NULL,	'2010-07-12',	'https://www.themoviedb.org/t/p/w600_and_h900_face/xlaY2zyzMfkhk0HSC5VUwzoZPU1.jpg',	'Cobb, a skilled thief who commits corporate espionage by infiltrating the subconscious of his targets is offered a chance to regain his old life as payment for a task considered to be impossible: "inception", the implantation of another person''s idea into a target''s subconscious.',	'https://vimeo.com/1190576869?share=copy&fl=sv&fe=ci'),
-(9,	'Sunset at BangPakok',	1.00,	5,	'2014-03-28',	'https://img1.pic.in.th/images/Gemini_Generated_Image_xa4ag3xa4ag3xa4a.png',	'A forbidden romance blossoms on the banks of Bang Pakok during World War II between P, a young local, and a high-ranking Japanese navy officer. Their passionate but perilous love story unfolds against the backdrop of war-torn Thailand, captured during a final, poignant moment before an uncertain future.',	'https://vimeo.com/1190582221?share=copy&fl=sv&fe=ci'),
-(4,	'The Dark Knight',	119.00,	NULL,	'2008-07-12',	'https://www.themoviedb.org/t/p/w600_and_h900_face/qJ2tW6WMUDux911r6m7haRef0WH.jpg',	'Batman raises the stakes in his war on crime. With the help of Lt. Jim Gordon and District Attorney Harvey Dent, Batman sets out to dismantle the remaining criminal organizations that plague the streets. The partnership proves to be effective, but they soon find themselves prey to a reign of chaos unleashed by a rising criminal mastermind known to the terrified citizens of Gotham as the Joker.',	'https://vimeo.com/1190586542?fl=pl&fe=sh'),
-(3,	'Interstellar',	149.00,	NULL,	'2014-11-04',	'https://www.themoviedb.org/t/p/w600_and_h900_face/yQvGrMoipbRoddT0ZR8tPoR7NfX.jpg',	'The adventures of a group of explorers who make use of a newly discovered wormhole to surpass the limitations on human space travel and conquer the vast distances involved in an interstellar voyage.',	'https://vimeo.com/1190587183?fl=pl&fe=sh'),
-(2,	'The Matrix',	99.00,	NULL,	'1999-03-27',	'https://www.themoviedb.org/t/p/w600_and_h900_face/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg',	'Set in the 22nd century, The Matrix tells the story of a computer hacker who joins a group of underground insurgents fighting the vast and powerful computers who now rule the earth.',	'https://vimeo.com/1190584646?fl=pl&fe=sh'),
-(12,	'John Wick 2 southern edition',	20.00,	NULL,	'2026-05-01',	'https://img2.pic.in.th/S__50241566.jpg',	'ไทเกอร์  อดีตหนุ่มกรีดยางระดับตำนานแห่งดินแดนด้ามขวาน ผู้ขึ้นชื่อเรื่องความไวและความคมของใบมีดระดับพระกาฬ เขาตัดสินใจล้างมือจากวงการสวนยางและคำครหาเพื่อไปใช้ชีวิตอย่างสงบ แต่ทว่าความสงบนั้นกลับพังทลายลง เมื่อศัตรูเก่าตามมาล้ำเส้นและพรากสิ่งสำคัญไปจากเขา เสือร้ายแห่งปักษ์ใต้จึงต้องคืนวงการอีกครั้ง แต่ครั้งนี้เป้าหมายไม่ใช่หน้ายาง แต่เป็นชีวิตของใครก็ตามที่ขวางหน้า ท่ามกลางกระสุนและคมมีดที่รุมล้อมจากทุกทิศทาง ไทเกอร์ต้องงัดทุกทักษะการ "กรีด" ที่มี เพื่อปิดบัญชีแค้นและพิสูจน์ว่าตำนานที่ลาวงการไปแล้ว... ยังคงเฉียบคมและอันตรายเสมอ',	'https://vimeo.com/1190580045?fl=pl&fe=sh'),
-(11,	'ภูมิ ตำนานแห่งหมู่บ้านบางระจัน',	1.00,	5,	'2026-05-01',	'https://img2.pic.in.th/Gemini_Generated_Image_1kkfcn1kkfcn1kkf.png',	'ในปี พ.ศ. 2309 ช่วงวิกฤตของกรุงศรีอยุธยา กองทัพพม่ากำลังรุกคืบเข้ามาใกล้เมืองหลวง. หมู่บ้านบางระจันกลายเป็นป้อมปราการแห่งสุดท้ายที่ขวางทางเดินทัพพม่า. ท่ามกลางความสิ้นหวังและความกลัวของชาวบ้าน ชาวบ้านคนอื่นๆ ที่พึ่งพิงความแกร่งและความกล้าหาญกลับไม่เพียงพอที่จะสู้กับกองทัพที่เหนือกว่า. ภูมิ, ชายหนุ่มผู้มีความรู้และสติปัญญา (สวมแว่นตาตาเดียว) ที่มีความเข้าใจในกลยุทธ์การรบและภูมิปัญญาท้องถิ่น, ตระหนักว่าการต่อสู้แบบเดิมๆ จะไม่สามารถปกป้องหมู่บ้านได้. เขาจึงใช้สติปัญญาของเขาในการวางแผนกลยุทธ์, การสร้างป้อมปราการที่แข็งแกร่ง, และการนำชาวบ้านที่มีความหลากหลายมารวมตัวกัน. เรื่องราวของการรวมพลังชาวบางระจันภายใต้การนำของภูมิที่ใช้ทั้งความแกร่งและสติปัญญาในการต่อสู้เพื่อปกป้องบ้านเกิดและสร้างตำนานที่ไม่มีวันลืม',	'https://youtu.be/P83n-n-W_Wk?si=By8C073aOAckEnA7'),
-(13,	'ทลายเหมืองทอง',	5.00,	3,	'2026-04-27',	'/uploads/posters/1778177456071-messageImage_1778176496619.jpg',	'เมื่อ Cotton อดีตนักศึกษาหนุ่มจากเมืองกรุงถูกรีไทร์จนต้องระเห็จมาพิสูจน์ตัวเองในเหมืองแร่อันห่างไกลในภาคใต้ ที่นั่นเขาได้พบกับ Tiger หนุ่มเจ้าถิ่นผู้ใช้ชีวิตเรียบง่ายแต่เต็มไปด้วยความแข็งแกร่ง ท่ามกลางบรรยากาศการทำงานที่หนักหน่วงและบททดสอบของธรรมชาติ มิตรภาพระหว่าง "เด็กมหาลัย" และ "เด็กใต้" ก็ได้เริ่มต้นขึ้น เป็นบทเรียนนอกตำราที่สอนให้พวกเขารู้จักความหมายของชีวิตและการยืนหยัดด้วยลำแข้งของตัวเอง',	'https://vimeo.com/1190555254?fl=pl&fe=sh');
+ท่ามกลางบรรยากาศที่มาคุและการเผชิญหน้าเพื่อทวงคืนความยุติธรรมให้กับอาหารที่จากไป พวกเขาต้องเรียนรู้ที่จะให้อภัยและแบ่งปัน จนกลายเป็นที่มาของวลีในตำนานที่ผูกมัดใจพวกเขาไว้ว่า "เราคำหนึ่ง" — คำพูดสั้นๆ ที่เต็มไปด้วยความหมาย (และความหิว) ที่จะทำให้คุณรู้ว่า มิตรภาพที่แท้จริง... บางครั้งก็วัดกันที่ข้าวแค่คำเดียว',	'https://vimeo.com/1190705421?share=copy&fl=sv&fe=ci',	'active',	NULL),
+(5,	'Avengers: Endgame',	159.00,	NULL,	'2019-04-19',	'https://www.themoviedb.org/t/p/w600_and_h900_face/ulzhLuWrPK07P1YkdWQLZnQh1JL.jpg',	'After the devastating events of Avengers: Infinity War, the universe is in ruins due to the efforts of the Mad Titan, Thanos. With the help of remaining allies, the Avengers must assemble once more in order to undo Thanos'' actions and restore order to the universe once and for all, no matter what consequences may be in store.',	'https://vimeo.com/1190562626?share=copy&fl=sv&fe=ci',	'active',	NULL),
+(9,	'Sunset at BangPakok',	1.00,	NULL,	'2014-03-28',	'https://img1.pic.in.th/images/Gemini_Generated_Image_xa4ag3xa4ag3xa4a.png',	'A forbidden romance blossoms on the banks of Bang Pakok during World War II between P, a young local, and a high-ranking Japanese navy officer. Their passionate but perilous love story unfolds against the backdrop of war-torn Thailand, captured during a final, poignant moment before an uncertain future.',	'https://vimeo.com/1190582221?share=copy&fl=sv&fe=ci',	'active',	NULL),
+(6,	'Parasite',	89.00,	NULL,	'2019-05-23',	'https://www.themoviedb.org/t/p/w600_and_h900_face/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg',	'All unemployed, Ki-taek''s family takes peculiar interest in the wealthy and glamorous Parks for their livelihood until they get entangled in an unexpected incident.',	'https://vimeo.com/1190585627?fl=pl&fe=sh',	'active',	NULL),
+(1,	'Inception',	129.00,	NULL,	'2010-07-12',	'https://www.themoviedb.org/t/p/w600_and_h900_face/xlaY2zyzMfkhk0HSC5VUwzoZPU1.jpg',	'Cobb, a skilled thief who commits corporate espionage by infiltrating the subconscious of his targets is offered a chance to regain his old life as payment for a task considered to be impossible: "inception", the implantation of another person''s idea into a target''s subconscious.',	'https://vimeo.com/1190576869?share=copy&fl=sv&fe=ci',	'active',	NULL),
+(4,	'The Dark Knight',	119.00,	NULL,	'2008-07-12',	'https://www.themoviedb.org/t/p/w600_and_h900_face/qJ2tW6WMUDux911r6m7haRef0WH.jpg',	'Batman raises the stakes in his war on crime. With the help of Lt. Jim Gordon and District Attorney Harvey Dent, Batman sets out to dismantle the remaining criminal organizations that plague the streets. The partnership proves to be effective, but they soon find themselves prey to a reign of chaos unleashed by a rising criminal mastermind known to the terrified citizens of Gotham as the Joker.',	'https://vimeo.com/1190586542?fl=pl&fe=sh',	'active',	NULL),
+(3,	'Interstellar',	149.00,	NULL,	'2014-11-04',	'https://www.themoviedb.org/t/p/w600_and_h900_face/yQvGrMoipbRoddT0ZR8tPoR7NfX.jpg',	'The adventures of a group of explorers who make use of a newly discovered wormhole to surpass the limitations on human space travel and conquer the vast distances involved in an interstellar voyage.',	'https://vimeo.com/1190587183?fl=pl&fe=sh',	'active',	NULL),
+(2,	'The Matrix',	99.00,	NULL,	'1999-03-27',	'https://www.themoviedb.org/t/p/w600_and_h900_face/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg',	'Set in the 22nd century, The Matrix tells the story of a computer hacker who joins a group of underground insurgents fighting the vast and powerful computers who now rule the earth.',	'https://vimeo.com/1190584646?fl=pl&fe=sh',	'active',	NULL),
+(12,	'John Wick 2 southern edition',	20.00,	NULL,	'2026-04-30',	'https://img2.pic.in.th/S__50241566.jpg',	'ไทเกอร์  อดีตหนุ่มกรีดยางระดับตำนานแห่งดินแดนด้ามขวาน ผู้ขึ้นชื่อเรื่องความไวและความคมของใบมีดระดับพระกาฬ เขาตัดสินใจล้างมือจากวงการสวนยางและคำครหาเพื่อไปใช้ชีวิตอย่างสงบ แต่ทว่าความสงบนั้นกลับพังทลายลง เมื่อศัตรูเก่าตามมาล้ำเส้นและพรากสิ่งสำคัญไปจากเขา เสือร้ายแห่งปักษ์ใต้จึงต้องคืนวงการอีกครั้ง แต่ครั้งนี้เป้าหมายไม่ใช่หน้ายาง แต่เป็นชีวิตของใครก็ตามที่ขวางหน้า ท่ามกลางกระสุนและคมมีดที่รุมล้อมจากทุกทิศทาง ไทเกอร์ต้องงัดทุกทักษะการ "กรีด" ที่มี เพื่อปิดบัญชีแค้นและพิสูจน์ว่าตำนานที่ลาวงการไปแล้ว... ยังคงเฉียบคมและอันตรายเสมอ',	'https://vimeo.com/1190580045?fl=pl&fe=sh',	'inactive',	NULL),
+(11,	'ภูมิ ตำนานแห่งหมู่บ้านบางระจัน',	1.00,	5,	'2026-05-01',	'https://img2.pic.in.th/Gemini_Generated_Image_1kkfcn1kkfcn1kkf.png',	'ในปี พ.ศ. 2309 ช่วงวิกฤตของกรุงศรีอยุธยา กองทัพพม่ากำลังรุกคืบเข้ามาใกล้เมืองหลวง. หมู่บ้านบางระจันกลายเป็นป้อมปราการแห่งสุดท้ายที่ขวางทางเดินทัพพม่า. ท่ามกลางความสิ้นหวังและความกลัวของชาวบ้าน ชาวบ้านคนอื่นๆ ที่พึ่งพิงความแกร่งและความกล้าหาญกลับไม่เพียงพอที่จะสู้กับกองทัพที่เหนือกว่า. ภูมิ, ชายหนุ่มผู้มีความรู้และสติปัญญา (สวมแว่นตาตาเดียว) ที่มีความเข้าใจในกลยุทธ์การรบและภูมิปัญญาท้องถิ่น, ตระหนักว่าการต่อสู้แบบเดิมๆ จะไม่สามารถปกป้องหมู่บ้านได้. เขาจึงใช้สติปัญญาของเขาในการวางแผนกลยุทธ์, การสร้างป้อมปราการที่แข็งแกร่ง, และการนำชาวบ้านที่มีความหลากหลายมารวมตัวกัน. เรื่องราวของการรวมพลังชาวบางระจันภายใต้การนำของภูมิที่ใช้ทั้งความแกร่งและสติปัญญาในการต่อสู้เพื่อปกป้องบ้านเกิดและสร้างตำนานที่ไม่มีวันลืม',	'https://youtu.be/P83n-n-W_Wk?si=By8C073aOAckEnA7',	'active',	NULL),
+(13,	'ทลายเหมืองทอง',	5.00,	5,	'2026-04-25',	'/uploads/posters/1778177456071-messageImage_1778176496619.jpg',	'เมื่อ Cotton อดีตนักศึกษาหนุ่มจากเมืองกรุงถูกรีไทร์จนต้องระเห็จมาพิสูจน์ตัวเองในเหมืองแร่อันห่างไกลในภาคใต้ ที่นั่นเขาได้พบกับ Tiger หนุ่มเจ้าถิ่นผู้ใช้ชีวิตเรียบง่ายแต่เต็มไปด้วยความแข็งแกร่ง ท่ามกลางบรรยากาศการทำงานที่หนักหน่วงและบททดสอบของธรรมชาติ มิตรภาพระหว่าง "เด็กมหาลัย" และ "เด็กใต้" ก็ได้เริ่มต้นขึ้น เป็นบทเรียนนอกตำราที่สอนให้พวกเขารู้จักความหมายของชีวิตและการยืนหยัดด้วยลำแข้งของตัวเอง',	'https://vimeo.com/1190555254?fl=pl&fe=sh',	'active',	NULL);
 
 DROP TABLE IF EXISTS "payment";
 DROP SEQUENCE IF EXISTS "public".payment_payment_id_seq;
@@ -379,7 +383,8 @@ INSERT INTO "payment" ("payment_id", "user_id", "cart_id", "amount", "qr_ref", "
 (13,	14,	22,	1.00,	'/qr_codes/promptpay_qr.jpg',	2,	'2026-05-08 18:24:54.077256',	'2026-05-09 18:24:54.077256',	NULL,	13),
 (14,	14,	23,	1.00,	'/qr_codes/promptpay_qr.jpg',	1,	'2026-05-08 18:51:02.049828',	'2026-05-09 18:51:02.049828',	'2026-05-08 18:51:02.049828',	14),
 (15,	16,	21,	1.00,	'/qr_codes/promptpay_qr.jpg',	1,	'2026-05-09 12:55:11.926419',	'2026-05-10 12:55:11.926419',	'2026-05-09 12:55:11.926419',	20),
-(16,	16,	20,	2.00,	'/qr_codes/promptpay_qr.jpg',	1,	'2026-05-09 12:56:02.649614',	'2026-05-10 12:56:02.649614',	'2026-05-09 12:56:02.649614',	21);
+(16,	16,	20,	2.00,	'/qr_codes/promptpay_qr.jpg',	1,	'2026-05-09 12:56:02.649614',	'2026-05-10 12:56:02.649614',	'2026-05-09 12:56:02.649614',	21),
+(17,	13,	6,	1.00,	'/qr_codes/promptpay_qr.jpg',	1,	'2026-05-10 05:55:27.29725',	'2026-05-11 05:55:27.29725',	'2026-05-10 05:55:27.29725',	22);
 
 DELIMITER ;;
 
@@ -404,9 +409,8 @@ INSERT INTO "playlist" ("playlist_id", "playlist_name", "library_id") VALUES
 (2,	'คนใต้จัด',	1),
 (3,	'หนังเทพ',	10),
 (4,	'หนังฝรั่ง',	11),
-(5,	'ลองหน่อย',	11),
-(6,	'หนังเก',	11),
-(7,	'หนังเก',	18);
+(7,	'หนังเก',	18),
+(6,	'หนังไทย',	11);
 
 DROP TABLE IF EXISTS "playlist_movie";
 CREATE TABLE "public"."playlist_movie" (
@@ -427,15 +431,13 @@ INSERT INTO "playlist_movie" ("playlist_id", "movie_id", "sort_order") VALUES
 (4,	4,	3),
 (3,	10,	1),
 (3,	9,	2),
-(5,	13,	1),
-(5,	5,	2),
-(5,	7,	3),
-(6,	13,	1),
-(6,	9,	2),
-(6,	10,	3),
 (7,	11,	1),
 (7,	10,	2),
-(7,	9,	3);
+(7,	9,	3),
+(6,	11,	1),
+(6,	13,	2),
+(6,	9,	3),
+(6,	10,	4);
 
 DROP TABLE IF EXISTS "report_review";
 CREATE TABLE "public"."report_review" (
@@ -468,11 +470,11 @@ WITH (oids = false);
 CREATE UNIQUE INDEX review_one_per_user_movie ON public.review USING btree (user_id, movie_id);
 
 INSERT INTO "review" ("review_id", "user_id", "movie_id", "review_number", "rating", "comment", "date_review") VALUES
-(4,	1,	13,	1,	5.0,	'ชอบฉันไทเกอร์เล่นเกกับคอตต้อน',	'2026-05-08 16:24:08.555996'),
-(5,	14,	13,	2,	1.0,	'ไม่เห็นเจี๋ยวไทเกอร์ไม่ชอบหนังกาก',	'2026-05-08 16:25:17.089959'),
-(6,	14,	10,	1,	5.0,	'ดูแล้วน้ำตาไหล',	'2026-05-08 16:26:37.170656'),
-(7,	14,	11,	1,	5.0,	'โคตรคุ้ม 1 บาทได้ดูเต็มเรื่อง',	'2026-05-08 20:16:48.996985'),
-(8,	14,	9,	1,	5.0,	'เสวปิ๊',	'2026-05-08 20:20:45.424675');
+(9,	13,	11,	1,	5.0,	'โคตรคุ้ม',	'2026-05-10 06:00:30.266783'),
+(10,	13,	13,	1,	5.0,	'สนุกมากกกกกกก',	'2026-05-10 06:00:41.952552'),
+(11,	13,	8,	1,	5.0,	'ดีกว่าต้นฉบับอีก',	'2026-05-10 06:00:58.139007'),
+(12,	16,	10,	1,	5.0,	'ดูแล้วน้ำตาแตก',	'2026-05-10 06:01:29.316639'),
+(13,	16,	11,	2,	5.0,	'สมจริงสุดๆ',	'2026-05-10 06:01:41.631446');
 
 DROP TABLE IF EXISTS "transfer_slip";
 DROP SEQUENCE IF EXISTS "public".transfer_slip_slip_id_seq;
@@ -503,7 +505,8 @@ INSERT INTO "transfer_slip" ("slip_id", "user_id", "slip_image", "amount", "uplo
 (13,	14,	'/uploads/slips/1778264694073-IMG_6593.jpg',	1.00,	'2026-05-08 18:24:54.077256'),
 (14,	14,	'/uploads/slips/1778266262046-IMG_6593.jpg',	1.00,	'2026-05-08 18:51:02.049828'),
 (20,	16,	'/uploads/slips/1778331311924-IMG_6593.jpg',	1.00,	'2026-05-09 12:55:11.926419'),
-(21,	16,	'/uploads/slips/1778331362637-IMG_6593.jpg',	2.00,	'2026-05-09 12:56:02.649614');
+(21,	16,	'/uploads/slips/1778331362637-IMG_6593.jpg',	2.00,	'2026-05-09 12:56:02.649614'),
+(22,	13,	'/uploads/slips/1778392527284-IMG_6593.jpg',	1.00,	'2026-05-10 05:55:27.29725');
 
 DROP TABLE IF EXISTS "users";
 DROP SEQUENCE IF EXISTS "public".users_user_id_seq;
@@ -536,7 +539,6 @@ INSERT INTO "users" ("user_id", "username", "email", "telephone", "password", "r
 (13,	'TestUser',	'user@movie.com',	'0812345678',	'$2a$10$skIFr38n1BlcHNyIAYBTdupQw6pYgESj1pJ0FAZ3v8tEx7eGIZdN6',	'2026-05-07 17:00:58.433799'),
 (1,	'MOSราชาSpaylater',	'mos@mail.com',	'081234561',	'$2a$10$UK7Rf4z6PODbAafINMSlVuu13EszsOA12PIAjf1zEfgJ8eiV2OojS',	'2026-05-07 13:56:55.398889'),
 (16,	'lui2',	'phalat.101@gmail.com',	'999',	'$2a$10$jRzh6DUO7actIrOoRhBeoOy8WUZr2KDAjcG7.uAmTsNOTX.a8YokG',	'2026-05-08 14:38:00.435253'),
-(17,	'12313',	'phalat1.lui@gmail.com',	'123',	'$2a$10$GUcfEQ3S7JyNCqbKihQhp.JoB1XmRUTwk2BalKzZyI8Hja.wFs.KK',	'2026-05-08 14:38:58.127515'),
 (14,	'Lui',	'phalat.lui@gmail.com',	'0877777777',	'$2a$10$lUCMn6HFEE9OGYU.36LjGOnRxz1.bqjArJUIOmDJ4/QkoytZd8c2.',	'2026-05-08 13:20:16.44417');
 
 ALTER TABLE ONLY "public"."cart" ADD CONSTRAINT "cart_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;
@@ -573,4 +575,4 @@ ALTER TABLE ONLY "public"."review" ADD CONSTRAINT "review_user_id_fkey" FOREIGN 
 
 ALTER TABLE ONLY "public"."transfer_slip" ADD CONSTRAINT "transfer_slip_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(user_id);
 
--- 2026-05-10 05:16:56 UTC
+-- 2026-05-10 11:00:27 UTC

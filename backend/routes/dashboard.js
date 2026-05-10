@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../db');
 const { authMiddleware } = require('../middleware/auth');
+const { getOnlineUserCount } = require('../onlineUsers');
 
 const router = express.Router();
 
@@ -58,6 +59,7 @@ router.get('/stats', authMiddleware, async (req, res) => {
         failed_count:   parseInt(paymentsResult.rows[0].failed_count),
         total_revenue:  parseFloat(paymentsResult.rows[0].total_revenue),
         total_reviews:  parseInt(reviewsResult.rows[0].total_reviews),
+        online_users:   getOnlineUserCount(),
       },
     });
   } catch (err) {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import Modal from '../components/Modal';
 import ConfirmModal from '../components/ConfirmModal';
-import { Pencil, Trash2, Plus, Search, Filter } from 'lucide-react';
+import { Pencil, Trash2, Plus, Search, Filter, ShieldCheck, UserRound } from 'lucide-react';
 
 const ManageUsers = () => {
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -35,12 +35,14 @@ const ManageUsers = () => {
   }, []);
 
   const handleEdit = (user) => {
+    if (user.role === 'admin') return;
     setSelectedId(user.user_id);
     setFormData({ username: user.username, email: user.email, telephone: user.telephone || '', password: '' });
     setIsEditOpen(true);
   };
 
   const handleDelete = (user) => {
+    if (user.role === 'admin') return;
     setSelectedId(user.user_id);
     setIsDeleteOpen(true);
   };
@@ -106,6 +108,7 @@ const ManageUsers = () => {
   const filteredUsers = users.filter(u => 
     (u.username && u.username.toLowerCase().includes(searchTerm.toLowerCase())) || 
     (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (u.role && u.role.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (u.telephone && u.telephone.toLowerCase().includes(searchTerm.toLowerCase())) ||
     String(u.user_id || '').includes(searchTerm.trim())
   ).sort((a, b) => {
@@ -158,6 +161,7 @@ const ManageUsers = () => {
               <tr>
                 <th className="px-6 py-4">User ID</th>
                 <th className="px-6 py-4">User Name</th>
+                <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4">Email</th>
                 <th className="px-6 py-4">Tel</th>
                 <th className="px-6 py-4">Joined Date</th>
@@ -166,18 +170,29 @@ const ManageUsers = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredUsers.map((user, idx) => (
-                <tr key={user.user_id || idx} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-gray-500 font-bold">#{user.user_id}</td>
-                  <td className="px-6 py-4 text-gray-600 font-medium cursor-pointer hover:text-figma-blue" onClick={() => handleEdit(user)}>{user.username}</td>
+                <tr key={`${user.role || 'user'}-${user.user_id || idx}`} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 text-gray-500 font-bold">{user.role === 'admin' ? 'Admin' : 'User'} #{user.user_id}</td>
+                  <td className={`px-6 py-4 text-gray-600 font-medium ${user.role === 'admin' ? '' : 'cursor-pointer hover:text-figma-blue'}`} onClick={() => handleEdit(user)}>{user.username}</td>
+                  <td className="px-6 py-4">
+                    <RoleBadge role={user.role} />
+                  </td>
                   <td className="px-6 py-4 text-gray-600">{user.email}</td>
                   <td className="px-6 py-4 text-gray-600">{user.telephone || '-'}</td>
                   <td className="px-6 py-4 text-gray-600">{user.register_date ? new Date(user.register_date).toLocaleDateString() : '-'}</td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <button onClick={() => handleEdit(user)} className="p-2 text-figma-blue bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 font-medium">
+                      <button
+                        onClick={() => handleEdit(user)}
+                        disabled={user.role === 'admin'}
+                        className="p-2 text-figma-blue bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 font-medium disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-blue-50"
+                      >
                         <Pencil size={16} /> Edit
                       </button>
-                      <button onClick={() => handleDelete(user)} className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-1 font-medium">
+                      <button
+                        onClick={() => handleDelete(user)}
+                        disabled={user.role === 'admin'}
+                        className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-1 font-medium disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-red-50"
+                      >
                         <Trash2 size={16} /> Delete
                       </button>
                     </div>
@@ -236,6 +251,22 @@ const ManageUsers = () => {
 
       <ConfirmModal isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} onConfirm={confirmDelete} title="Delete User" message="Are you sure you want to remove this user from the system? This action cannot be undone." />
     </Layout>
+  );
+};
+
+const RoleBadge = ({ role = 'user' }) => {
+  const isAdmin = role === 'admin';
+  const Icon = isAdmin ? ShieldCheck : UserRound;
+
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${
+      isAdmin
+        ? 'bg-violet-50 text-violet-700 border border-violet-100'
+        : 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+    }`}>
+      <Icon size={14} />
+      {isAdmin ? 'Administrator' : 'User'}
+    </span>
   );
 };
 

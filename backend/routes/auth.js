@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../db');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const { touchOnlineUser } = require('../onlineUsers');
 require('dotenv').config();
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -120,6 +121,7 @@ router.post('/login', async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
+    touchOnlineUser({ id: userId, role });
 
     res.json({
       success: true,

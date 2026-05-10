@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import UserLayout from '../../components/UserLayout';
-import { Plus, Play, Trash2, Loader2, ListMusic, Pencil } from 'lucide-react';
+import { Plus, Play, Trash2, Loader2, ListMusic, Pencil, AlertTriangle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const API_BASE = 'http://localhost:5000/api';
@@ -12,6 +12,9 @@ const Playlists = () => {
   const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [playlistToDelete, setPlaylistToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState('');
 
   const fetchPlaylists = async () => {
     const userStr = localStorage.getItem('user');
@@ -65,17 +68,39 @@ const Playlists = () => {
     }
   };
 
-  const deletePlaylist = async (playlistId) => {
-    if (!window.confirm('ลบ playlist นี้ใช่ไหม?')) return;
+  const openDeleteDialog = (playlist) => {
+    setPlaylistToDelete(playlist);
+    setDeleteMessage('');
+  };
+
+  const closeDeleteDialog = () => {
+    if (deleting) return;
+    setPlaylistToDelete(null);
+    setDeleteMessage('');
+  };
+
+  const deletePlaylist = async () => {
+    if (!playlistToDelete) return;
     const token = localStorage.getItem('token');
+    setDeleting(true);
+    setDeleteMessage('');
     try {
-      await fetch(`${API_BASE}/playlists/${playlistId}`, {
+      const res = await fetch(`${API_BASE}/playlists/${playlistToDelete.playlist_id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      const data = await res.json();
+      if (!res.ok || data.success === false) {
+        setDeleteMessage(data.message || 'ลบ playlist ไม่สำเร็จ');
+        return;
+      }
+      setPlaylistToDelete(null);
       fetchPlaylists();
     } catch (err) {
       console.error('Delete playlist error:', err);
+      setDeleteMessage('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -125,7 +150,7 @@ const Playlists = () => {
 
                 {/* ปุ่มลบ */}
                 <button
-                  onClick={() => deletePlaylist(pl.playlist_id)}
+                  onClick={() => openDeleteDialog(pl)}
                   className="p-2.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
                   title="ลบ playlist"
                 >
@@ -180,6 +205,63 @@ const Playlists = () => {
               <p className="text-sm mt-1">สร้าง Playlist แรกของคุณเพื่อเริ่มต้น</p>
             </div>
           )}
+        </div>
+      )}
+
+      {playlistToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-red-50 text-red-500">
+                <AlertTriangle size={22} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">ลบ playlist นี้ใช่ไหม?</h2>
+                    <p className="mt-1 text-sm leading-6 text-gray-500">
+                      ระบบจะลบ "{playlistToDelete.playlist_name}" ออกจาก My Playlists
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={closeDeleteDialog}
+                    disabled={deleting}
+                    className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
+                    aria-label="ปิดกล่องยืนยันการลบ"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {deleteMessage && (
+                  <div className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-600">
+                    {deleteMessage}
+                  </div>
+                )}
+
+                <div className="mt-6 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={closeDeleteDialog}
+                    disabled={deleting}
+                    className="rounded-xl px-4 py-2 text-sm font-bold text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="button"
+                    onClick={deletePlaylist}
+                    disabled={deleting}
+                    className="flex items-center gap-2 rounded-xl bg-red-500 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-red-600 disabled:opacity-60"
+                  >
+                    {deleting && <Loader2 className="animate-spin" size={16} />}
+                    ลบ
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </UserLayout>

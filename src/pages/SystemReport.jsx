@@ -3,6 +3,7 @@ import Layout from '../components/Layout';
 import {
   AlertTriangle,
   BarChart3,
+  CheckSquare,
   DollarSign,
   Download,
   FileSpreadsheet,
@@ -20,6 +21,15 @@ const formatMoney = (value) => `฿${Number(value || 0).toLocaleString(undefined
 const formatNumber = (value) => Number(value || 0).toLocaleString();
 const reportDate = () => new Date().toLocaleString();
 
+const printSectionOptions = [
+  { id: 'metrics', label: 'Executive Metrics' },
+  { id: 'summary', label: 'Management Summary' },
+  { id: 'topMovies', label: 'Top Rated Movies' },
+  { id: 'revenueTrend', label: 'Revenue Trend' },
+  { id: 'genres', label: 'Genre Mix' },
+  { id: 'pendingPayments', label: 'Pending Payment Work Queue' },
+];
+
 const SystemReport = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -31,6 +41,9 @@ const SystemReport = () => {
     pendingPayments: [],
     reviews: [],
   });
+  const [printSections, setPrintSections] = useState(
+    printSectionOptions.reduce((sections, option) => ({ ...sections, [option.id]: true }), {})
+  );
 
   const fetchReport = async () => {
     setLoading(true);
@@ -168,6 +181,16 @@ const SystemReport = () => {
     row.value.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const selectedPrintCount = Object.values(printSections).filter(Boolean).length;
+
+  const togglePrintSection = (sectionId) => {
+    setPrintSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
+  };
+
+  const selectAllPrintSections = () => {
+    setPrintSections(printSectionOptions.reduce((sections, option) => ({ ...sections, [option.id]: true }), {}));
+  };
+
   const buildReportHtml = () => {
     const metricRows = executiveMetrics.map(metric => `
       <tr>
@@ -214,9 +237,18 @@ const SystemReport = () => {
       </tr>
     `).join('');
 
+    const genreRows = report.genres.slice(0, 8).map(item => `
+      <tr>
+        <td>${item.genre_name}</td>
+        <td>${item.movie_count}</td>
+      </tr>
+    `).join('');
+
     return `
       <html>
         <head>
+          <meta charset="UTF-8" />
+          <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
           <title>FilmHub Executive System Report</title>
           <style>
             body { font-family: Arial, sans-serif; color: #111827; padding: 28px; }
@@ -232,16 +264,12 @@ const SystemReport = () => {
         <body>
           <h1>FilmHub Executive System Report</h1>
           <p>Generated: ${reportDate()}</p>
-          <h2>Executive Metrics</h2>
-          <table><thead><tr><th>Metric</th><th>Value</th><th>Insight</th><th>Status</th></tr></thead><tbody>${metricRows}</tbody></table>
-          <h2>Management Summary</h2>
-          <table><thead><tr><th>Metric</th><th>Value</th><th>Owner View</th><th>Status</th></tr></thead><tbody>${summaryRows}</tbody></table>
-          <h2>Top Rated Movies</h2>
-          <table><thead><tr><th>#</th><th>Movie</th><th>Rating</th><th>Reviews</th><th>Price</th></tr></thead><tbody>${movieRows}</tbody></table>
-          <h2>Revenue Trend</h2>
-          <table><thead><tr><th>Month</th><th>Revenue</th><th>Successful Payments</th></tr></thead><tbody>${revenueRows}</tbody></table>
-          <h2>Pending Payment Work Queue</h2>
-          <table><thead><tr><th>Payment</th><th>Customer</th><th>Amount</th><th>Date</th></tr></thead><tbody>${pendingRows || '<tr><td colspan="4">No pending payments</td></tr>'}</tbody></table>
+          ${printSections.metrics ? `<h2>Executive Metrics</h2><table><thead><tr><th>Metric</th><th>Value</th><th>Insight</th><th>Status</th></tr></thead><tbody>${metricRows}</tbody></table>` : ''}
+          ${printSections.summary ? `<h2>Management Summary</h2><table><thead><tr><th>Metric</th><th>Value</th><th>Owner View</th><th>Status</th></tr></thead><tbody>${summaryRows}</tbody></table>` : ''}
+          ${printSections.topMovies ? `<h2>Top Rated Movies</h2><table><thead><tr><th>#</th><th>Movie</th><th>Rating</th><th>Reviews</th><th>Price</th></tr></thead><tbody>${movieRows || '<tr><td colspan="5">No data</td></tr>'}</tbody></table>` : ''}
+          ${printSections.revenueTrend ? `<h2>Revenue Trend</h2><table><thead><tr><th>Month</th><th>Revenue</th><th>Successful Payments</th></tr></thead><tbody>${revenueRows || '<tr><td colspan="3">No data</td></tr>'}</tbody></table>` : ''}
+          ${printSections.genres ? `<h2>Genre Mix</h2><table><thead><tr><th>Genre</th><th>Movie Count</th></tr></thead><tbody>${genreRows || '<tr><td colspan="2">No data</td></tr>'}</tbody></table>` : ''}
+          ${printSections.pendingPayments ? `<h2>Pending Payment Work Queue</h2><table><thead><tr><th>Payment</th><th>Customer</th><th>Amount</th><th>Date</th></tr></thead><tbody>${pendingRows || '<tr><td colspan="4">No pending payments</td></tr>'}</tbody></table>` : ''}
           <p class="muted">This report is generated from live FilmHub database APIs.</p>
         </body>
       </html>
@@ -249,6 +277,7 @@ const SystemReport = () => {
   };
 
   const printReport = () => {
+    if (selectedPrintCount === 0) return;
     const win = window.open('', '_blank', 'width=1100,height=800');
     if (!win) return;
     win.document.write(buildReportHtml());
@@ -262,7 +291,8 @@ const SystemReport = () => {
   };
 
   const exportExcel = () => {
-    const blob = new Blob([buildReportHtml()], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const excelHtml = `\uFEFF${buildReportHtml()}`;
+    const blob = new Blob([excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -298,15 +328,61 @@ const SystemReport = () => {
                   className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm"
                 />
               </div>
-              <button onClick={exportPdf} className="px-4 py-2.5 bg-red-50 text-red-600 rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-100">
+              <button
+                onClick={exportPdf}
+                disabled={selectedPrintCount === 0}
+                className="px-4 py-2.5 bg-red-50 text-red-600 rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
                 <FileText size={18} /> Export to PDF
               </button>
-              <button onClick={exportExcel} className="px-4 py-2.5 bg-green-50 text-green-600 rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-green-100">
+              <button
+                onClick={exportExcel}
+                disabled={selectedPrintCount === 0}
+                className="px-4 py-2.5 bg-green-50 text-green-600 rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-green-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
                 <FileSpreadsheet size={18} /> Export to Excel
               </button>
-              <button onClick={printReport} className="px-4 py-2.5 bg-gray-900 text-white rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-gray-700">
+              <button
+                onClick={printReport}
+                disabled={selectedPrintCount === 0}
+                className="px-4 py-2.5 bg-gray-900 text-white rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
                 <Printer size={18} /> Print
               </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gray-100 text-gray-700 flex items-center justify-center">
+                  <CheckSquare size={20} />
+                </div>
+                <div>
+                  <h2 className="text-base font-black text-gray-900">Print Selection</h2>
+                  <p className="text-xs text-gray-500 mt-1">{selectedPrintCount} of {printSectionOptions.length} sections selected for print and PDF export.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={selectAllPrintSections}
+                className="self-start lg:self-auto px-3 py-2 text-sm font-bold text-figma-blue bg-blue-50 rounded-lg hover:bg-blue-100"
+              >
+                Select All
+              </button>
+            </div>
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              {printSectionOptions.map(option => (
+                <label key={option.id} className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-bold text-gray-700 cursor-pointer hover:border-figma-blue hover:bg-blue-50">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(printSections[option.id])}
+                    onChange={() => togglePrintSection(option.id)}
+                    className="h-4 w-4 accent-blue-600"
+                  />
+                  {option.label}
+                </label>
+              ))}
             </div>
           </div>
 
