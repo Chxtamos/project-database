@@ -132,7 +132,8 @@ INSERT INTO "cart" ("cart_id", "user_id", "created_at", "updated_at") VALUES
 (21,	16,	'2026-05-08 16:09:30.703524',	'2026-05-08 16:09:30.703524'),
 (22,	14,	'2026-05-08 18:22:50.98506',	'2026-05-08 18:22:50.98506'),
 (23,	14,	'2026-05-08 18:24:54.093273',	'2026-05-08 18:24:54.093273'),
-(24,	14,	'2026-05-08 18:51:02.489668',	'2026-05-08 18:51:02.489668');
+(24,	14,	'2026-05-08 18:51:02.489668',	'2026-05-08 18:51:02.489668'),
+(25,	16,	'2026-05-09 12:56:03.20079',	'2026-05-09 12:56:03.20079');
 
 DELIMITER ;;
 
@@ -152,7 +153,8 @@ INSERT INTO "cart_movies" ("cart_id", "movie_id") VALUES
 (15,	10),
 (19,	11),
 (18,	11),
-(22,	11);
+(22,	11),
+(24,	12);
 
 DROP TABLE IF EXISTS "genre";
 DROP SEQUENCE IF EXISTS "public".genre_genre_id_seq;
@@ -206,7 +208,10 @@ INSERT INTO "library" ("library_id", "user_id", "movie_id", "favorite") VALUES
 (10,	14,	9,	'0'),
 (12,	14,	6,	'0'),
 (14,	14,	4,	'0'),
-(17,	14,	11,	'0');
+(17,	14,	11,	'0'),
+(18,	16,	11,	'0'),
+(19,	16,	10,	'0'),
+(20,	16,	9,	'0');
 
 DROP TABLE IF EXISTS "movie_actor";
 CREATE TABLE "public"."movie_actor" (
@@ -219,9 +224,6 @@ WITH (oids = false);
 INSERT INTO "movie_actor" ("movie_id", "actor_id") VALUES
 (12,	7),
 (12,	13),
-(11,	22),
-(11,	23),
-(11,	24),
 (9,	9),
 (9,	21),
 (8,	8),
@@ -234,16 +236,20 @@ INSERT INTO "movie_actor" ("movie_id", "actor_id") VALUES
 (5,	5),
 (6,	16),
 (6,	17),
-(13,	6),
-(13,	7),
 (6,	18),
 (1,	1),
 (10,	8),
 (10,	9),
 (10,	10),
+(13,	6),
+(13,	7),
+(11,	22),
+(11,	23),
 (4,	15),
 (3,	14),
-(2,	13);
+(2,	13),
+(11,	24),
+(11,	12);
 
 DROP TABLE IF EXISTS "movie_author";
 CREATE TABLE "public"."movie_author" (
@@ -256,6 +262,8 @@ WITH (oids = false);
 INSERT INTO "movie_author" ("movie_id", "author_id") VALUES
 (10,	6),
 (13,	6),
+(11,	6),
+(11,	15),
 (4,	1),
 (3,	1),
 (2,	7),
@@ -263,8 +271,6 @@ INSERT INTO "movie_author" ("movie_id", "author_id") VALUES
 (12,	6),
 (12,	9),
 (12,	10),
-(11,	6),
-(11,	15),
 (9,	6),
 (9,	14),
 (8,	4),
@@ -297,11 +303,11 @@ INSERT INTO "movie_genre" ("movie_id", "genre_id") VALUES
 (13,	3),
 (13,	4),
 (13,	6),
+(11,	1),
 (4,	1),
 (3,	4),
 (2,	4),
-(12,	1),
-(11,	1);
+(12,	1);
 
 DROP TABLE IF EXISTS "movies";
 DROP SEQUENCE IF EXISTS "public".movies_movie_id_seq;
@@ -335,9 +341,9 @@ INSERT INTO "movies" ("movie_id", "movie_name", "movie_cost", "movie_rating", "m
 (4,	'The Dark Knight',	119.00,	NULL,	'2008-07-12',	'https://www.themoviedb.org/t/p/w600_and_h900_face/qJ2tW6WMUDux911r6m7haRef0WH.jpg',	'Batman raises the stakes in his war on crime. With the help of Lt. Jim Gordon and District Attorney Harvey Dent, Batman sets out to dismantle the remaining criminal organizations that plague the streets. The partnership proves to be effective, but they soon find themselves prey to a reign of chaos unleashed by a rising criminal mastermind known to the terrified citizens of Gotham as the Joker.',	'https://vimeo.com/1190586542?fl=pl&fe=sh'),
 (3,	'Interstellar',	149.00,	NULL,	'2014-11-04',	'https://www.themoviedb.org/t/p/w600_and_h900_face/yQvGrMoipbRoddT0ZR8tPoR7NfX.jpg',	'The adventures of a group of explorers who make use of a newly discovered wormhole to surpass the limitations on human space travel and conquer the vast distances involved in an interstellar voyage.',	'https://vimeo.com/1190587183?fl=pl&fe=sh'),
 (2,	'The Matrix',	99.00,	NULL,	'1999-03-27',	'https://www.themoviedb.org/t/p/w600_and_h900_face/aOIuZAjPaRIE6CMzbazvcHuHXDc.jpg',	'Set in the 22nd century, The Matrix tells the story of a computer hacker who joins a group of underground insurgents fighting the vast and powerful computers who now rule the earth.',	'https://vimeo.com/1190584646?fl=pl&fe=sh'),
-(13,	'ทลายเหมืองทอง',	5.00,	3,	'2026-04-28',	'/uploads/posters/1778177456071-messageImage_1778176496619.jpg',	'เมื่อ Cotton อดีตนักศึกษาหนุ่มจากเมืองกรุงถูกรีไทร์จนต้องระเห็จมาพิสูจน์ตัวเองในเหมืองแร่อันห่างไกลในภาคใต้ ที่นั่นเขาได้พบกับ Tiger หนุ่มเจ้าถิ่นผู้ใช้ชีวิตเรียบง่ายแต่เต็มไปด้วยความแข็งแกร่ง ท่ามกลางบรรยากาศการทำงานที่หนักหน่วงและบททดสอบของธรรมชาติ มิตรภาพระหว่าง "เด็กมหาลัย" และ "เด็กใต้" ก็ได้เริ่มต้นขึ้น เป็นบทเรียนนอกตำราที่สอนให้พวกเขารู้จักความหมายของชีวิตและการยืนหยัดด้วยลำแข้งของตัวเอง',	'https://vimeo.com/1190555254?fl=pl&fe=sh'),
 (12,	'John Wick 2 southern edition',	20.00,	NULL,	'2026-05-01',	'https://img2.pic.in.th/S__50241566.jpg',	'ไทเกอร์  อดีตหนุ่มกรีดยางระดับตำนานแห่งดินแดนด้ามขวาน ผู้ขึ้นชื่อเรื่องความไวและความคมของใบมีดระดับพระกาฬ เขาตัดสินใจล้างมือจากวงการสวนยางและคำครหาเพื่อไปใช้ชีวิตอย่างสงบ แต่ทว่าความสงบนั้นกลับพังทลายลง เมื่อศัตรูเก่าตามมาล้ำเส้นและพรากสิ่งสำคัญไปจากเขา เสือร้ายแห่งปักษ์ใต้จึงต้องคืนวงการอีกครั้ง แต่ครั้งนี้เป้าหมายไม่ใช่หน้ายาง แต่เป็นชีวิตของใครก็ตามที่ขวางหน้า ท่ามกลางกระสุนและคมมีดที่รุมล้อมจากทุกทิศทาง ไทเกอร์ต้องงัดทุกทักษะการ "กรีด" ที่มี เพื่อปิดบัญชีแค้นและพิสูจน์ว่าตำนานที่ลาวงการไปแล้ว... ยังคงเฉียบคมและอันตรายเสมอ',	'https://vimeo.com/1190580045?fl=pl&fe=sh'),
-(11,	'ภูมิ ตำนานแห่งหมู่บ้านบางระจัน',	1.00,	5,	'2026-05-02',	'https://img2.pic.in.th/Gemini_Generated_Image_1kkfcn1kkfcn1kkf.png',	'ในปี พ.ศ. 2309 ช่วงวิกฤตของกรุงศรีอยุธยา กองทัพพม่ากำลังรุกคืบเข้ามาใกล้เมืองหลวง. หมู่บ้านบางระจันกลายเป็นป้อมปราการแห่งสุดท้ายที่ขวางทางเดินทัพพม่า. ท่ามกลางความสิ้นหวังและความกลัวของชาวบ้าน ชาวบ้านคนอื่นๆ ที่พึ่งพิงความแกร่งและความกล้าหาญกลับไม่เพียงพอที่จะสู้กับกองทัพที่เหนือกว่า. ภูมิ, ชายหนุ่มผู้มีความรู้และสติปัญญา (สวมแว่นตาตาเดียว) ที่มีความเข้าใจในกลยุทธ์การรบและภูมิปัญญาท้องถิ่น, ตระหนักว่าการต่อสู้แบบเดิมๆ จะไม่สามารถปกป้องหมู่บ้านได้. เขาจึงใช้สติปัญญาของเขาในการวางแผนกลยุทธ์, การสร้างป้อมปราการที่แข็งแกร่ง, และการนำชาวบ้านที่มีความหลากหลายมารวมตัวกัน. เรื่องราวของการรวมพลังชาวบางระจันภายใต้การนำของภูมิที่ใช้ทั้งความแกร่งและสติปัญญาในการต่อสู้เพื่อปกป้องบ้านเกิดและสร้างตำนานที่ไม่มีวันลืม',	'https://youtu.be/P83n-n-W_Wk?si=By8C073aOAckEnA7');
+(11,	'ภูมิ ตำนานแห่งหมู่บ้านบางระจัน',	1.00,	5,	'2026-05-01',	'https://img2.pic.in.th/Gemini_Generated_Image_1kkfcn1kkfcn1kkf.png',	'ในปี พ.ศ. 2309 ช่วงวิกฤตของกรุงศรีอยุธยา กองทัพพม่ากำลังรุกคืบเข้ามาใกล้เมืองหลวง. หมู่บ้านบางระจันกลายเป็นป้อมปราการแห่งสุดท้ายที่ขวางทางเดินทัพพม่า. ท่ามกลางความสิ้นหวังและความกลัวของชาวบ้าน ชาวบ้านคนอื่นๆ ที่พึ่งพิงความแกร่งและความกล้าหาญกลับไม่เพียงพอที่จะสู้กับกองทัพที่เหนือกว่า. ภูมิ, ชายหนุ่มผู้มีความรู้และสติปัญญา (สวมแว่นตาตาเดียว) ที่มีความเข้าใจในกลยุทธ์การรบและภูมิปัญญาท้องถิ่น, ตระหนักว่าการต่อสู้แบบเดิมๆ จะไม่สามารถปกป้องหมู่บ้านได้. เขาจึงใช้สติปัญญาของเขาในการวางแผนกลยุทธ์, การสร้างป้อมปราการที่แข็งแกร่ง, และการนำชาวบ้านที่มีความหลากหลายมารวมตัวกัน. เรื่องราวของการรวมพลังชาวบางระจันภายใต้การนำของภูมิที่ใช้ทั้งความแกร่งและสติปัญญาในการต่อสู้เพื่อปกป้องบ้านเกิดและสร้างตำนานที่ไม่มีวันลืม',	'https://youtu.be/P83n-n-W_Wk?si=By8C073aOAckEnA7'),
+(13,	'ทลายเหมืองทอง',	5.00,	3,	'2026-04-27',	'/uploads/posters/1778177456071-messageImage_1778176496619.jpg',	'เมื่อ Cotton อดีตนักศึกษาหนุ่มจากเมืองกรุงถูกรีไทร์จนต้องระเห็จมาพิสูจน์ตัวเองในเหมืองแร่อันห่างไกลในภาคใต้ ที่นั่นเขาได้พบกับ Tiger หนุ่มเจ้าถิ่นผู้ใช้ชีวิตเรียบง่ายแต่เต็มไปด้วยความแข็งแกร่ง ท่ามกลางบรรยากาศการทำงานที่หนักหน่วงและบททดสอบของธรรมชาติ มิตรภาพระหว่าง "เด็กมหาลัย" และ "เด็กใต้" ก็ได้เริ่มต้นขึ้น เป็นบทเรียนนอกตำราที่สอนให้พวกเขารู้จักความหมายของชีวิตและการยืนหยัดด้วยลำแข้งของตัวเอง',	'https://vimeo.com/1190555254?fl=pl&fe=sh');
 
 DROP TABLE IF EXISTS "payment";
 DROP SEQUENCE IF EXISTS "public".payment_payment_id_seq;
@@ -371,7 +377,9 @@ INSERT INTO "payment" ("payment_id", "user_id", "cart_id", "amount", "qr_ref", "
 (11,	14,	19,	1.00,	'/qr_codes/promptpay_qr.jpg',	2,	'2026-05-08 18:14:08.511349',	'2026-05-09 18:14:08.511349',	NULL,	11),
 (12,	14,	18,	1.00,	'/qr_codes/promptpay_qr.jpg',	2,	'2026-05-08 18:22:50.9603',	'2026-05-09 18:22:50.9603',	NULL,	12),
 (13,	14,	22,	1.00,	'/qr_codes/promptpay_qr.jpg',	2,	'2026-05-08 18:24:54.077256',	'2026-05-09 18:24:54.077256',	NULL,	13),
-(14,	14,	23,	1.00,	'/qr_codes/promptpay_qr.jpg',	1,	'2026-05-08 18:51:02.049828',	'2026-05-09 18:51:02.049828',	'2026-05-08 18:51:02.049828',	14);
+(14,	14,	23,	1.00,	'/qr_codes/promptpay_qr.jpg',	1,	'2026-05-08 18:51:02.049828',	'2026-05-09 18:51:02.049828',	'2026-05-08 18:51:02.049828',	14),
+(15,	16,	21,	1.00,	'/qr_codes/promptpay_qr.jpg',	1,	'2026-05-09 12:55:11.926419',	'2026-05-10 12:55:11.926419',	'2026-05-09 12:55:11.926419',	20),
+(16,	16,	20,	2.00,	'/qr_codes/promptpay_qr.jpg',	1,	'2026-05-09 12:56:02.649614',	'2026-05-10 12:56:02.649614',	'2026-05-09 12:56:02.649614',	21);
 
 DELIMITER ;;
 
@@ -397,7 +405,8 @@ INSERT INTO "playlist" ("playlist_id", "playlist_name", "library_id") VALUES
 (3,	'หนังเทพ',	10),
 (4,	'หนังฝรั่ง',	11),
 (5,	'ลองหน่อย',	11),
-(6,	'หนังเก',	11);
+(6,	'หนังเก',	11),
+(7,	'หนังเก',	18);
 
 DROP TABLE IF EXISTS "playlist_movie";
 CREATE TABLE "public"."playlist_movie" (
@@ -423,7 +432,10 @@ INSERT INTO "playlist_movie" ("playlist_id", "movie_id", "sort_order") VALUES
 (5,	7,	3),
 (6,	13,	1),
 (6,	9,	2),
-(6,	10,	3);
+(6,	10,	3),
+(7,	11,	1),
+(7,	10,	2),
+(7,	9,	3);
 
 DROP TABLE IF EXISTS "report_review";
 CREATE TABLE "public"."report_review" (
@@ -489,7 +501,9 @@ INSERT INTO "transfer_slip" ("slip_id", "user_id", "slip_image", "amount", "uplo
 (11,	14,	'/uploads/slips/1778264048498-IMG_6593.jpg',	1.00,	'2026-05-08 18:14:08.511349'),
 (12,	14,	'/uploads/slips/1778264570948-IMG_6593.jpg',	1.00,	'2026-05-08 18:22:50.9603'),
 (13,	14,	'/uploads/slips/1778264694073-IMG_6593.jpg',	1.00,	'2026-05-08 18:24:54.077256'),
-(14,	14,	'/uploads/slips/1778266262046-IMG_6593.jpg',	1.00,	'2026-05-08 18:51:02.049828');
+(14,	14,	'/uploads/slips/1778266262046-IMG_6593.jpg',	1.00,	'2026-05-08 18:51:02.049828'),
+(20,	16,	'/uploads/slips/1778331311924-IMG_6593.jpg',	1.00,	'2026-05-09 12:55:11.926419'),
+(21,	16,	'/uploads/slips/1778331362637-IMG_6593.jpg',	2.00,	'2026-05-09 12:56:02.649614');
 
 DROP TABLE IF EXISTS "users";
 DROP SEQUENCE IF EXISTS "public".users_user_id_seq;
@@ -559,4 +573,4 @@ ALTER TABLE ONLY "public"."review" ADD CONSTRAINT "review_user_id_fkey" FOREIGN 
 
 ALTER TABLE ONLY "public"."transfer_slip" ADD CONSTRAINT "transfer_slip_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(user_id);
 
--- 2026-05-09 12:37:48 UTC
+-- 2026-05-10 05:16:56 UTC
