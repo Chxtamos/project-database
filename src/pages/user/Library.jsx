@@ -69,7 +69,7 @@ const Library = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
           {movies.map(movie => (
             <div key={movie.library_id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden group">
-              <div className="aspect-[2/3] relative overflow-hidden">
+              <div className="aspect-[2/3] relative overflow-hidden cursor-pointer" onClick={() => navigate(`/user/movie/${movie.movie_id}`)}>
                 <img
                   src={getPosterSrc(movie.movie_poster)}
                   alt={movie.movie_name}
@@ -77,14 +77,14 @@ const Library = () => {
                 />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                   <button
-                    onClick={() => navigate(`/user/watch/${movie.movie_id}`)}
+                    onClick={(e) => { e.stopPropagation(); navigate(`/user/watch/${movie.movie_id}`); }}
                     className="p-3 rounded-full bg-figma-blue text-white shadow-xl hover:scale-110 transition-transform"
                     title="Watch movie"
                   >
                     <Play size={20} fill="currentColor" />
                   </button>
                   <button
-                    onClick={() => toggleFavorite(movie.library_id)}
+                    onClick={(e) => { e.stopPropagation(); toggleFavorite(movie.library_id); }}
                     className={`p-2 rounded-full shadow-xl hover:scale-110 transition-transform ${
                       movie.favorite ? 'bg-red-500 text-white' : 'bg-white text-gray-600'
                     }`}

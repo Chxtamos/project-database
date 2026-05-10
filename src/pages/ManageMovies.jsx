@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import Modal from '../components/Modal';
 import ConfirmModal from '../components/ConfirmModal';
-import { Pencil, Trash2, Plus, Search, Filter, ImagePlus, Upload, Star, Link as LinkIcon, Loader2 } from 'lucide-react';
+import { Pencil, Trash2, Plus, Search, Filter, ImagePlus, Link as LinkIcon, Loader2 } from 'lucide-react';
 
 const API_BASE = 'http://localhost:5000/api';
 
@@ -16,11 +16,14 @@ const ManageMovies = () => {
   const [uploadingImage, setUploadingImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('date_desc');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [actors, setActors] = useState([]);
   const [authors, setAuthors] = useState([]);
 
   const [formData, setFormData] = useState({ 
-    movie_id: '', movie_name: '', genre_ids: [], actor_ids: [], author_ids: [], movie_cost: '', movie_releasedate: '', status: 'Published', poster_url: '', video_url: '', detail: ''
+    movie_id: '', movie_name: '', genre_ids: [], actor_ids: [], author_ids: [], movie_cost: '', movie_releasedate: '', movie_status: 'active', poster_url: '', video_url: '', detail: ''
   });
 
   const fetchMovies = async () => {
@@ -70,12 +73,11 @@ const ManageMovies = () => {
 
   const handleEdit = (movie) => {
     setSelectedId(movie.movie_id);
-    const isDraft = new Date(movie.movie_releasedate) > new Date();
     setFormData({
       movie_name: movie.movie_name,
       movie_cost: movie.movie_cost,
       movie_releasedate: movie.movie_releasedate ? movie.movie_releasedate.split('T')[0] : '',
-      status: isDraft ? 'Draft' : 'Published',
+      movie_status: movie.movie_status || 'active',
       poster_url: (movie.movie_poster && movie.movie_poster.startsWith('http')) ? movie.movie_poster : '',
       genre_ids: movie.genres ? movie.genres.map(g => g.genre_id) : [],
       actor_ids: movie.actors ? movie.actors.map(a => a.actor_id) : [],
@@ -122,6 +124,7 @@ const ManageMovies = () => {
     data.append('author_ids', formData.author_ids.join(','));
     data.append('video_url', formData.video_url || '');
     data.append('detail', formData.detail);
+    data.append('movie_status', formData.movie_status || 'active');
     if (formData.poster_url) data.append('poster_url', formData.poster_url);
     if (imageFile) data.append('poster', imageFile);
 
@@ -186,15 +189,41 @@ const ManageMovies = () => {
     }
   };
 
-  const filteredMovies = movies.filter(m => 
-    m.movie_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
     const d = new Date(dateStr);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
+
+  const isActiveMovie = (movie) => movie.movie_status !== 'inactive';
+
+  const filteredMovies = movies
+    .filter(m => {
+      const q = searchTerm.toLowerCase().trim();
+      const released = m.movie_releasedate ? new Date(m.movie_releasedate) : null;
+      const afterStart = !dateFrom || (released && released >= new Date(`${dateFrom}T00:00:00`));
+      const beforeEnd = !dateTo || (released && released <= new Date(`${dateTo}T23:59:59`));
+      const searchable = [
+        m.movie_id,
+        m.movie_name,
+        m.movie_releasedate ? formatDate(m.movie_releasedate) : '',
+        m.movie_releasedate ? m.movie_releasedate.split('T')[0] : '',
+      ].join(' ').toLowerCase();
+      return searchable.includes(q) && afterStart && beforeEnd;
+    })
+    .sort((a, b) => {
+      const nameCompare = (a.movie_name || '').localeCompare(b.movie_name || '', ['th', 'en'], { sensitivity: 'base' });
+      const priceA = Number(a.movie_cost || 0);
+      const priceB = Number(b.movie_cost || 0);
+      const dateA = new Date(a.movie_releasedate || 0).getTime();
+      const dateB = new Date(b.movie_releasedate || 0).getTime();
+      if (sortBy === 'price_asc') return priceA - priceB;
+      if (sortBy === 'price_desc') return priceB - priceA;
+      if (sortBy === 'name_asc') return nameCompare;
+      if (sortBy === 'name_desc') return -nameCompare;
+      if (sortBy === 'date_asc') return dateA - dateB;
+      return dateB - dateA;
+    });
 
   const getPosterSrc = (path) => {
     if (!path) return '';
@@ -210,41 +239,51 @@ const ManageMovies = () => {
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Total Movies</p>
           <div className="flex items-center justify-between">
             <p className="text-3xl font-black text-gray-900">{movies.length}</p>
-            <span className="text-xs font-bold text-green-700 bg-green-100 px-2 py-1 rounded">+12%</span>
           </div>
         </div>
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Active Titles</p>
           <div className="flex items-center justify-between">
-            <p className="text-3xl font-black text-gray-900">{movies.filter(m => new Date(m.movie_releasedate) <= new Date()).length}</p>
-            <span className="text-xs font-bold text-blue-700 bg-blue-100 px-2 py-1 rounded">Live</span>
+            <p className="text-3xl font-black text-gray-900">{movies.filter(isActiveMovie).length}</p>
           </div>
         </div>
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Average Rating</p>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Inactive Titles</p>
           <div className="flex items-center justify-between">
-            <p className="text-3xl font-black text-gray-900 flex items-center gap-2">
-              {(movies.reduce((acc, m) => acc + (m.movie_rating || 0), 0) / (movies.length || 1)).toFixed(1)} <Star className="text-yellow-500 fill-yellow-500" size={24} />
-            </p>
-            <span className="text-xs font-bold text-gray-500">Platform Avg</span>
+            <p className="text-3xl font-black text-gray-900">{movies.filter(m => !isActiveMovie(m)).length}</p>
           </div>
         </div>
       </div>
 
       {/* Main Table Container */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative w-full sm:w-96">
+        <div className="p-5 border-b border-gray-200 flex flex-col xl:flex-row items-center justify-between gap-4">
+          <div className="relative w-full xl:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               type="text" 
-              placeholder="Search movies..." 
+              placeholder="Search ID, movie name, release date..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" 
             />
           </div>
-          <button onClick={() => { setUploadingImage(null); setFormData({ movie_name: '', genre_ids: [], actor_ids: [], author_ids: [], movie_cost: '', movie_releasedate: new Date().toISOString().split('T')[0], status: 'Published', poster_url: '', video_url: '', detail: '' }); setIsAddOpen(true); }} className="w-full sm:w-auto px-5 py-2.5 bg-figma-blue text-white rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-700 transition-all active:scale-95 shadow-sm">
+          <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+            <div className="flex items-center gap-2">
+              <Filter size={18} className="text-gray-400" />
+              <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-figma-blue bg-white">
+                <option value="date_desc">Date newest first</option>
+                <option value="date_asc">Date oldest first</option>
+                <option value="price_asc">Price smallest to biggest</option>
+                <option value="price_desc">Price biggest to smallest</option>
+                <option value="name_asc">Name A-Z / ก-ฮ</option>
+                <option value="name_desc">Name Z-A / ฮ-ก</option>
+              </select>
+            </div>
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-figma-blue" title="Release date from" />
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-figma-blue" title="Release date to" />
+          </div>
+          <button onClick={() => { setUploadingImage(null); setFormData({ movie_name: '', genre_ids: [], actor_ids: [], author_ids: [], movie_cost: '', movie_releasedate: new Date().toISOString().split('T')[0], movie_status: 'active', poster_url: '', video_url: '', detail: '' }); setIsAddOpen(true); }} className="w-full sm:w-auto px-5 py-2.5 bg-figma-blue text-white rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-700 transition-all active:scale-95 shadow-sm">
             <Plus size={18} />
             Add New Movie
           </button>
@@ -265,12 +304,13 @@ const ManageMovies = () => {
                   <th className="px-6 py-4">Movie Name</th>
                   <th className="px-6 py-4">Price</th>
                   <th className="px-6 py-4">Release Date</th>
+                  <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredMovies.map((movie) => {
-                  const isDraft = new Date(movie.movie_releasedate) > new Date();
+                  const active = isActiveMovie(movie);
                   return (
                     <tr key={movie.movie_id} className="hover:bg-gray-50 transition-colors group">
                       <td className="px-6 py-4 font-bold text-gray-400">#{movie.movie_id}</td>
@@ -281,7 +321,7 @@ const ManageMovies = () => {
                       </td>
                       <td className="px-6 py-4">
                         <p className="font-bold text-gray-900 text-base mb-1 cursor-pointer hover:text-figma-blue" onClick={() => handleEdit(movie)}>
-                          {movie.movie_name} {isDraft && <span className="ml-2 text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full uppercase">Draft</span>}
+                          {movie.movie_name}
                         </p>
                         <p className="text-xs text-gray-500 font-medium">{movie.genres ? movie.genres.map(g => g.genre_name).join(' • ') : 'No Genre'}</p>
                         {movie.actors && movie.actors.length > 0 && (
@@ -293,6 +333,11 @@ const ManageMovies = () => {
                       </td>
                       <td className="px-6 py-4 font-bold text-figma-blue">฿{movie.movie_cost}</td>
                       <td className="px-6 py-4 text-gray-600 font-medium">{formatDate(movie.movie_releasedate)}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${active ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-gray-100 text-gray-500 border border-gray-200'}`}>
+                          {active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex justify-center gap-2">
                           <button onClick={() => handleEdit(movie)} className="p-1.5 text-figma-blue bg-white border border-blue-200 hover:bg-blue-50 rounded-lg shadow-sm">
@@ -358,6 +403,13 @@ const ManageMovies = () => {
             <div className="col-span-1 space-y-1.5">
               <label className="text-sm font-bold text-gray-700">Release Date</label>
               <input type="date" required value={formData.movie_releasedate} onChange={e => setFormData({...formData, movie_releasedate: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none text-sm" />
+            </div>
+            <div className="col-span-2 space-y-1.5">
+              <label className="text-sm font-bold text-gray-700">Active Status</label>
+              <select value={formData.movie_status} onChange={e => setFormData({...formData, movie_status: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none text-sm bg-white">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
             </div>
             <div className="col-span-2 space-y-1.5">
               <label className="text-sm font-bold text-gray-700">Synopsis (Detail)</label>
@@ -457,6 +509,13 @@ const ManageMovies = () => {
               <div className="space-y-1.5">
                 <label className="text-sm font-bold text-gray-700">Release Date</label>
                 <input type="date" required value={formData.movie_releasedate} onChange={e => setFormData({...formData, movie_releasedate: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none text-sm" />
+              </div>
+              <div className="md:col-span-2 space-y-1.5">
+                <label className="text-sm font-bold text-gray-700">Active Status</label>
+                <select value={formData.movie_status} onChange={e => setFormData({...formData, movie_status: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none text-sm bg-white">
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
               </div>
               <div className="md:col-span-2 space-y-1.5">
                 <label className="text-sm font-bold text-gray-700">Synopsis (Detail)</label>

@@ -12,6 +12,7 @@ const ManageUsers = () => {
 
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('joined_desc');
   const [formData, setFormData] = useState({ username: '', email: '', password: '', telephone: '' });
 
   const fetchUsers = async () => {
@@ -33,23 +34,21 @@ const ManageUsers = () => {
     fetchUsers();
   }, []);
 
-  const handleEdit = (idx) => {
-    setSelectedId(idx);
-    const user = users[idx];
+  const handleEdit = (user) => {
+    setSelectedId(user.user_id);
     setFormData({ username: user.username, email: user.email, telephone: user.telephone || '', password: '' });
     setIsEditOpen(true);
   };
 
-  const handleDelete = (idx) => {
-    setSelectedId(idx);
+  const handleDelete = (user) => {
+    setSelectedId(user.user_id);
     setIsDeleteOpen(true);
   };
 
   const confirmDelete = async () => {
     try {
       const token = localStorage.getItem('token');
-      const userToDelete = users[selectedId];
-      await fetch(`http://localhost:5000/api/users/${userToDelete.user_id}`, {
+      await fetch(`http://localhost:5000/api/users/${selectedId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -85,8 +84,7 @@ const ManageUsers = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const userToEdit = users[selectedId];
-      await fetch(`http://localhost:5000/api/users/${userToEdit.user_id}`, {
+      await fetch(`http://localhost:5000/api/users/${selectedId}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -107,8 +105,20 @@ const ManageUsers = () => {
 
   const filteredUsers = users.filter(u => 
     (u.username && u.username.toLowerCase().includes(searchTerm.toLowerCase())) || 
-    (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+    (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (u.telephone && u.telephone.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    String(u.user_id || '').includes(searchTerm.trim())
+  ).sort((a, b) => {
+    const nameCompare = (a.username || '').localeCompare(b.username || '', ['th', 'en'], { sensitivity: 'base' });
+    const dateA = new Date(a.register_date || 0).getTime();
+    const dateB = new Date(b.register_date || 0).getTime();
+    if (sortBy === 'id_asc') return Number(a.user_id || 0) - Number(b.user_id || 0);
+    if (sortBy === 'id_desc') return Number(b.user_id || 0) - Number(a.user_id || 0);
+    if (sortBy === 'name_asc') return nameCompare;
+    if (sortBy === 'name_desc') return -nameCompare;
+    if (sortBy === 'joined_asc') return dateA - dateB;
+    return dateB - dateA;
+  });
 
   return (
     <Layout pageTitle="Manage User Overview" pageDescription="Administrative control of user accounts.">
@@ -119,15 +129,23 @@ const ManageUsers = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input 
                 type="text" 
-                placeholder="Search users..." 
+                placeholder="Search ID, name, email, tel..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm" 
               />
             </div>
-            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
+            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="Filter and sort users">
               <Filter size={18} />
             </button>
+            <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-figma-blue outline-none text-sm">
+              <option value="joined_desc">Newest joined</option>
+              <option value="joined_asc">Oldest joined</option>
+              <option value="id_asc">ID smallest to biggest</option>
+              <option value="id_desc">ID biggest to smallest</option>
+              <option value="name_asc">Name A-Z / ก-ฮ</option>
+              <option value="name_desc">Name Z-A / ฮ-ก</option>
+            </select>
           </div>
           <button onClick={() => setIsAddOpen(true)} className="px-4 py-2 bg-figma-blue text-white rounded-lg font-medium text-sm flex items-center gap-2 hover:bg-blue-700 transition-all active:scale-95">
             <Plus size={18} />
@@ -138,8 +156,10 @@ const ManageUsers = () => {
           <table className="w-full text-left text-sm">
             <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-100">
               <tr>
+                <th className="px-6 py-4">User ID</th>
                 <th className="px-6 py-4">User Name</th>
                 <th className="px-6 py-4">Email</th>
+                <th className="px-6 py-4">Tel</th>
                 <th className="px-6 py-4">Joined Date</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
@@ -147,15 +167,17 @@ const ManageUsers = () => {
             <tbody className="divide-y divide-gray-100">
               {filteredUsers.map((user, idx) => (
                 <tr key={user.user_id || idx} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-gray-600 font-medium cursor-pointer hover:text-figma-blue" onClick={() => handleEdit(idx)}>{user.username}</td>
+                  <td className="px-6 py-4 text-gray-500 font-bold">#{user.user_id}</td>
+                  <td className="px-6 py-4 text-gray-600 font-medium cursor-pointer hover:text-figma-blue" onClick={() => handleEdit(user)}>{user.username}</td>
                   <td className="px-6 py-4 text-gray-600">{user.email}</td>
+                  <td className="px-6 py-4 text-gray-600">{user.telephone || '-'}</td>
                   <td className="px-6 py-4 text-gray-600">{user.register_date ? new Date(user.register_date).toLocaleDateString() : '-'}</td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <button onClick={() => handleEdit(idx)} className="p-2 text-figma-blue bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 font-medium">
+                      <button onClick={() => handleEdit(user)} className="p-2 text-figma-blue bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 font-medium">
                         <Pencil size={16} /> Edit
                       </button>
-                      <button onClick={() => handleDelete(idx)} className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-1 font-medium">
+                      <button onClick={() => handleDelete(user)} className="p-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-1 font-medium">
                         <Trash2 size={16} /> Delete
                       </button>
                     </div>

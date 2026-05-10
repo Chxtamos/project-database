@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import UserLayout from '../../components/UserLayout';
 import Modal from '../../components/Modal';
 import ConfirmModal from '../../components/ConfirmModal';
-import { Star, Flag, Send, Loader2, ShoppingCart, Check, X, Play } from 'lucide-react';
+import { Star, Flag, Send, Loader2, ShoppingCart, Check, X, Play, Heart } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 const API_BASE = 'http://localhost:5000/api';
@@ -21,11 +21,13 @@ const MovieDetail = () => {
   const [cartNotice, setCartNotice] = useState('');
   const [reportId, setReportId] = useState(null);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
+  const [libraryEntry, setLibraryEntry] = useState(null);
   
   const currentUserStr = localStorage.getItem('user');
   const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
   
-  const isOwned = movie && library.some(movieId => Number(movieId) === Number(movie.movie_id));
+  const isOwned = movie && (library.some(movieId => Number(movieId) === Number(movie.movie_id)) || Boolean(libraryEntry));
+  const isActive = movie?.movie_status !== 'inactive';
   const hasReviewed = Boolean(
     currentUser && reviews.some(r => Number(r.user_id) === Number(currentUser.user_id))
   );
@@ -41,6 +43,14 @@ const MovieDetail = () => {
         const movieData = await movieRes.json();
         if (movieData.success) {
           setMovie(movieData.data);
+        }
+
+        if (token && currentUser) {
+          const libraryRes = await fetch(`${API_BASE}/library/${currentUser.user_id}`, { headers });
+          const libraryData = await libraryRes.json();
+          if (libraryData.success) {
+            setLibraryEntry(libraryData.data.find(item => Number(item.movie_id) === Number(id)) || null);
+          }
         }
         
         // Fetch reviews
@@ -75,6 +85,20 @@ const MovieDetail = () => {
     const result = await addToCart(movie.movie_id);
     if (!result?.success) {
       setCartNotice(result?.message || 'ไม่สามารถเพิ่มหนังเข้าตะกร้าได้');
+    }
+  };
+
+  const toggleFavorite = async () => {
+    if (!libraryEntry) return;
+    try {
+      await fetch(`${API_BASE}/library/${libraryEntry.library_id}/favorite`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      setLibraryEntry(prev => prev ? { ...prev, favorite: !prev.favorite } : prev);
+    } catch (err) {
+      console.error('Toggle favorite error:', err);
+      setCartNotice('Could not update favorite.');
     }
   };
 
@@ -229,7 +253,11 @@ const MovieDetail = () => {
               </div>
             </div>
 
-            {!isOwned ? (
+            {!isActive && !isOwned ? (
+              <div className="mt-4 px-8 py-4 bg-gray-100 text-gray-500 font-bold rounded-2xl border border-gray-200 inline-flex items-center justify-center">
+                This movie is not active right now
+              </div>
+            ) : !isOwned ? (
               <button 
                 onClick={handleAddToCart}
                 className="mt-4 px-8 py-4 bg-figma-blue text-white font-bold rounded-2xl hover:bg-emerald-600 hover:shadow-emerald-200 transition-all shadow-lg shadow-blue-200 active:scale-95 flex items-center justify-center gap-2"
@@ -244,6 +272,19 @@ const MovieDetail = () => {
                   className="px-8 py-4 bg-figma-blue text-white font-bold rounded-2xl hover:bg-indigo-700 hover:shadow-indigo-200 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
                 >
                   <Play size={20} fill="currentColor" /> Watch Movie
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleFavorite}
+                  className={`px-5 py-4 font-bold rounded-2xl border flex items-center justify-center gap-2 transition-all active:scale-95 ${
+                    libraryEntry?.favorite
+                      ? 'bg-red-50 text-red-600 border-red-100 hover:bg-red-100'
+                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                  }`}
+                  title={libraryEntry?.favorite ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  <Heart size={20} fill={libraryEntry?.favorite ? 'currentColor' : 'none'} />
+                  Favorite
                 </button>
                 <div className="px-8 py-4 bg-green-50 text-green-700 font-bold rounded-2xl border border-green-200 flex items-center justify-center gap-2">
                   <Check size={20} /> คุณเป็นเจ้าของเรื่องนี้แล้ว

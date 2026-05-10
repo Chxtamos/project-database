@@ -11,11 +11,21 @@ const router = express.Router();
 router.get('/stats', authMiddleware, async (req, res) => {
   try {
     const [usersResult, moviesResult, paymentsResult, reviewsResult] = await Promise.all([
-      pool.query('SELECT COUNT(*) AS total_users FROM public.users'),
+      pool.query(`
+        SELECT
+          COUNT(*) AS total_users,
+          COUNT(*) FILTER (WHERE register_date::date = CURRENT_DATE) AS new_users_today,
+          COUNT(*) FILTER (WHERE DATE_TRUNC('month', register_date) = DATE_TRUNC('month', CURRENT_DATE)) AS new_users_month,
+          COUNT(*) FILTER (WHERE DATE_TRUNC('year', register_date) = DATE_TRUNC('year', CURRENT_DATE)) AS new_users_year
+        FROM public.users
+      `),
       pool.query(`
         SELECT
           COUNT(*) AS total_movies,
-          ROUND(AVG(movie_rating)::numeric, 1) AS avg_rating
+          ROUND(AVG(movie_rating)::numeric, 1) AS avg_rating,
+          COUNT(*) FILTER (WHERE movie_releasedate::date = CURRENT_DATE) AS new_movies_today,
+          COUNT(*) FILTER (WHERE DATE_TRUNC('month', movie_releasedate) = DATE_TRUNC('month', CURRENT_DATE)) AS new_movies_month,
+          COUNT(*) FILTER (WHERE DATE_TRUNC('year', movie_releasedate) = DATE_TRUNC('year', CURRENT_DATE)) AS new_movies_year
         FROM public.movies
       `),
       pool.query(`
@@ -34,7 +44,13 @@ router.get('/stats', authMiddleware, async (req, res) => {
       success: true,
       data: {
         total_users:    parseInt(usersResult.rows[0].total_users),
+        new_users_today: parseInt(usersResult.rows[0].new_users_today),
+        new_users_month: parseInt(usersResult.rows[0].new_users_month),
+        new_users_year:  parseInt(usersResult.rows[0].new_users_year),
         total_movies:   parseInt(moviesResult.rows[0].total_movies),
+        new_movies_today: parseInt(moviesResult.rows[0].new_movies_today),
+        new_movies_month: parseInt(moviesResult.rows[0].new_movies_month),
+        new_movies_year:  parseInt(moviesResult.rows[0].new_movies_year),
         avg_rating:     parseFloat(moviesResult.rows[0].avg_rating) || 0,
         total_payments: parseInt(paymentsResult.rows[0].total_payments),
         pending_count:  parseInt(paymentsResult.rows[0].pending_count),

@@ -41,6 +41,7 @@ const Home = () => {
   };
 
   const filteredMovies = movies.filter(movie => {
+    if (movie.movie_status === 'inactive') return false;
     const q = searchTerm.trim().toLowerCase();
     if (!q) return true;
 

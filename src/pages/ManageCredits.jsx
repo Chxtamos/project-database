@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Layout from '../components/Layout';
 import ConfirmModal from '../components/ConfirmModal';
-import { Pencil, Plus, Search, Trash2, UserRound, BookOpen } from 'lucide-react';
+import { Filter, Pencil, Plus, Search, Trash2, UserRound, BookOpen } from 'lucide-react';
 
 const API_BASE = 'http://localhost:5000/api';
 
@@ -31,6 +31,7 @@ const ManageCredits = () => {
   const [authors, setAuthors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('name_asc');
   const [forms, setForms] = useState({ actors: '', authors: '' });
   const [editing, setEditing] = useState({ type: '', id: null });
   const [error, setError] = useState('');
@@ -65,7 +66,17 @@ const ManageCredits = () => {
 
   const filteredData = (type, nameKey) => {
     const q = searchTerm.toLowerCase();
-    return dataByType[type].filter(item => item[nameKey]?.toLowerCase().includes(q));
+    return dataByType[type]
+      .filter(item => item[nameKey]?.toLowerCase().includes(q))
+      .sort((a, b) => {
+        const nameCompare = (a[nameKey] || '').localeCompare(b[nameKey] || '', ['th', 'en'], { sensitivity: 'base' });
+        const moviesA = Number(a.movie_count || 0);
+        const moviesB = Number(b.movie_count || 0);
+        if (sortBy === 'name_desc') return -nameCompare;
+        if (sortBy === 'movies_asc') return moviesA - moviesB;
+        if (sortBy === 'movies_desc') return moviesB - moviesA;
+        return nameCompare;
+      });
   };
 
   const resetForm = (type) => {
@@ -153,6 +164,15 @@ const ManageCredits = () => {
               onChange={e => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-figma-blue outline-none transition-all text-sm"
             />
+          </div>
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <Filter size={18} className="text-gray-400" />
+            <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-full md:w-56 px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-figma-blue outline-none text-sm">
+              <option value="name_asc">Name A-Z / ก-ฮ</option>
+              <option value="name_desc">Name Z-A / ฮ-ก</option>
+              <option value="movies_desc">Movies most to least</option>
+              <option value="movies_asc">Movies least to most</option>
+            </select>
           </div>
         </div>
 

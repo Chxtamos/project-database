@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { Users, Clapperboard, Eye, ArrowRight, Activity, Loader2 } from 'lucide-react';
+import { Users, Clapperboard, Eye, ArrowRight, Activity, Loader2, UserPlus, Film, CalendarDays } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const API_BASE = 'http://localhost:5000/api';
 
 const Dashboard = () => {
-  const [stats, setStats] = useState({ users: 0, movies: 0 });
+  const [stats, setStats] = useState({
+    users: 0,
+    movies: 0,
+    newUsersToday: 0,
+    newUsersMonth: 0,
+    newUsersYear: 0,
+    newMoviesToday: 0,
+    newMoviesMonth: 0,
+    newMoviesYear: 0,
+  });
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [pendingPayments, setPendingPayments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +34,12 @@ const Dashboard = () => {
         setStats({
           users: statsData.data.total_users || 0,
           movies: statsData.data.total_movies || 0,
+          newUsersToday: statsData.data.new_users_today || 0,
+          newUsersMonth: statsData.data.new_users_month || 0,
+          newUsersYear: statsData.data.new_users_year || 0,
+          newMoviesToday: statsData.data.new_movies_today || 0,
+          newMoviesMonth: statsData.data.new_movies_month || 0,
+          newMoviesYear: statsData.data.new_movies_year || 0,
         });
       }
 
@@ -76,25 +91,11 @@ const Dashboard = () => {
       </div>
 
       {/* Top Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-5">
-          <div className="w-14 h-14 rounded-lg bg-blue-50 flex items-center justify-center">
-            <Users className="text-figma-blue" size={28} />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Total Users</p>
-            <p className="text-3xl font-black text-gray-900">{stats.users.toLocaleString()}</p>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-5">
-          <div className="w-14 h-14 rounded-lg bg-gray-100 flex items-center justify-center">
-            <Clapperboard className="text-gray-500" size={28} />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Total Movies</p>
-            <p className="text-3xl font-black text-gray-900">{stats.movies.toLocaleString()}</p>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-5 mb-10">
+        <StatCard icon={Users} label="Total Users" value={stats.users} tone="blue" />
+        <StatCard icon={Clapperboard} label="Total Movies" value={stats.movies} tone="slate" />
+        <PeriodCard icon={UserPlus} label="New Users" today={stats.newUsersToday} month={stats.newUsersMonth} year={stats.newUsersYear} />
+        <PeriodCard icon={Film} label="New Movies" today={stats.newMoviesToday} month={stats.newMoviesMonth} year={stats.newMoviesYear} />
       </div>
 
       {/* Top 5 Trending Movies */}
@@ -191,5 +192,42 @@ const Dashboard = () => {
     </Layout>
   );
 };
+
+const StatCard = ({ icon: Icon, label, value, tone }) => (
+  <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4 min-h-[126px]">
+    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${tone === 'blue' ? 'bg-blue-50 text-figma-blue' : 'bg-gray-100 text-gray-600'}`}>
+      <Icon size={24} />
+    </div>
+    <div>
+      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-3xl font-black text-gray-900">{Number(value || 0).toLocaleString()}</p>
+    </div>
+  </div>
+);
+
+const PeriodCard = ({ icon: Icon, label, today, month, year }) => (
+  <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm min-h-[126px]">
+    <div className="flex items-center gap-3 mb-4">
+      <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+        <Icon size={20} />
+      </div>
+      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{label}</p>
+    </div>
+    <div className="grid grid-cols-3 gap-2">
+      {[
+        ['Today', today],
+        ['Month', month],
+        ['Year', year],
+      ].map(([title, count]) => (
+        <div key={title} className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
+          <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase">
+            <CalendarDays size={11} /> {title}
+          </div>
+          <p className="text-xl font-black text-gray-900 mt-1">{Number(count || 0).toLocaleString()}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 export default Dashboard;

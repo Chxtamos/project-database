@@ -10,6 +10,13 @@ const router = express.Router();
 // ─────────────────────────────────────────────
 router.get('/:user_id', authMiddleware, async (req, res) => {
   try {
+    await pool.query(
+      `UPDATE public.movies
+       SET movie_status = 'inactive'
+       WHERE movie_status = 'active'
+         AND screening_expires_at IS NOT NULL
+         AND screening_expires_at <= CURRENT_TIMESTAMP`
+    );
     const result = await pool.query(
       `SELECT l.library_id, l.user_id, l.favorite, m.*
        FROM public.library l

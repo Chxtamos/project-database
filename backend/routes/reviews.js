@@ -52,6 +52,7 @@ router.get('/', authMiddleware, async (req, res) => {
          m.movie_name,
          COALESCE(rep.report_count, 0)::int AS report_count,
          COALESCE(rep.reporters, '') AS report_reporters,
+         COALESCE(rep.report_reasons, '') AS report_reasons,
          rep.last_report_date
        FROM public.review r
        JOIN public.users u ON r.user_id = u.user_id
@@ -61,6 +62,7 @@ router.get('/', authMiddleware, async (req, res) => {
            rr.review_id,
            COUNT(*) AS report_count,
            STRING_AGG(ru.username, ', ' ORDER BY rr.report_date DESC) AS reporters,
+           STRING_AGG(ru.username || ': ' || COALESCE(rr.reason, ''), E'\n' ORDER BY rr.report_date DESC) AS report_reasons,
            MAX(rr.report_date) AS last_report_date
          FROM public.report_review rr
          JOIN public.users ru ON rr.reporter_id = ru.user_id
@@ -142,6 +144,19 @@ router.post('/:id/report', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Report review error:', err.message);
     res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในระบบ' });
+  }
+});
+
+router.delete('/:id/reports', authMiddleware, adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'DELETE FROM public.report_review WHERE review_id = $1 RETURNING review_id',
+      [req.params.id]
+    );
+    res.json({ success: true, cleared: result.rowCount });
+  } catch (err) {
+    console.error('Reject review reports error:', err.message);
+    res.status(500).json({ success: false, message: 'Cannot reject review reports.' });
   }
 });
 

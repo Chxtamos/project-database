@@ -16,6 +16,20 @@ const parseIds = (value) => {
   return [];
 };
 
+const normalizeMovieStatus = (value) => (
+  value === 'inactive' ? 'inactive' : 'active'
+);
+
+const refreshExpiredMovies = async (db = pool) => {
+  await db.query(
+    `UPDATE public.movies
+     SET movie_status = 'inactive'
+     WHERE movie_status = 'active'
+       AND screening_expires_at IS NOT NULL
+       AND screening_expires_at <= CURRENT_TIMESTAMP`
+  );
+};
+
 // ─── Multer สำหรับอัพโหลด poster ───────────────────────────────
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, '../uploads/posters')),
@@ -41,6 +55,7 @@ router.get('/', async (req, res) => {
   const offset = limitNumber ? (pageNumber - 1) * limitNumber : 0;
 
   try {
+    await refreshExpiredMovies();
     const conditions = [];
     const values = [];
     let idx = 1;
@@ -82,6 +97,8 @@ router.get('/', async (req, res) => {
          m.movie_poster,
          m.video_url,
          m.detail,
+         m.movie_status,
+         m.screening_expires_at,
          COALESCE(
            json_agg(DISTINCT jsonb_build_object('genre_id', g.genre_id, 'genre_name', g.genre_name))
            FILTER (WHERE g.genre_id IS NOT NULL),
@@ -149,6 +166,7 @@ router.get('/authors/all', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
+    await refreshExpiredMovies();
     const result = await pool.query(
       `SELECT
          m.*,
@@ -183,7 +201,7 @@ router.get('/:id', async (req, res) => {
 // genre_ids: comma-separated string "1,2,3"
 // ─────────────────────────────────────────────
 router.post('/', authMiddleware, upload.single('poster'), async (req, res) => {
-  const { movie_name, movie_cost, movie_rating, movie_releasedate, genre_ids, actor_ids, author_ids, poster_url, video_url, detail } = req.body;
+  const { movie_name, movie_cost, movie_rating, movie_releasedate, genre_ids, actor_ids, author_ids, poster_url, video_url, detail, movie_status, screening_expires_at } = req.body;
 
   if (!movie_name || !movie_cost || !movie_releasedate) {
     return res.status(400).json({ success: false, message: 'movie_name, movie_cost, movie_releasedate เป็นข้อมูลที่จำเป็น' });
@@ -198,10 +216,20 @@ router.post('/', authMiddleware, upload.single('poster'), async (req, res) => {
     await client.query('BEGIN');
 
     const movieResult = await client.query(
-      `INSERT INTO public.movies (movie_name, movie_cost, movie_rating, movie_releasedate, movie_poster, video_url, detail)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO public.movies (movie_name, movie_cost, movie_rating, movie_releasedate, movie_poster, video_url, detail, movie_status, screening_expires_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [movie_name, parseFloat(movie_cost), movie_rating ? parseInt(movie_rating) : null, movie_releasedate, poster, video_url || null, detail || '-']
+      [
+        movie_name,
+        parseFloat(movie_cost),
+        movie_rating ? parseInt(movie_rating) : null,
+        movie_releasedate,
+        poster,
+        video_url || null,
+        detail || '-',
+        normalizeMovieStatus(movie_status),
+        screening_expires_at || null,
+      ]
     );
     const newMovie = movieResult.rows[0];
 
@@ -248,7 +276,7 @@ router.post('/', authMiddleware, upload.single('poster'), async (req, res) => {
 // PUT /api/movies/:id
 // ─────────────────────────────────────────────
 router.put('/:id', authMiddleware, upload.single('poster'), async (req, res) => {
-  const { movie_name, movie_cost, movie_rating, movie_releasedate, genre_ids, actor_ids, author_ids, poster_url, video_url, detail } = req.body;
+  const { movie_name, movie_cost, movie_rating, movie_releasedate, genre_ids, actor_ids, author_ids, poster_url, video_url, detail, movie_status, screening_expires_at } = req.body;
 
   const client = await pool.connect();
   try {
@@ -271,8 +299,10 @@ router.put('/:id', authMiddleware, upload.single('poster'), async (req, res) => 
          movie_releasedate = $4,
          movie_poster      = $5,
          video_url         = $6,
-         detail            = $7
-       WHERE movie_id = $8
+         detail            = $7,
+         movie_status      = $8,
+         screening_expires_at = $9
+       WHERE movie_id = $10
        RETURNING *`,
       [
         movie_name        ?? old.movie_name,
@@ -282,6 +312,8 @@ router.put('/:id', authMiddleware, upload.single('poster'), async (req, res) => 
         poster,
         video_url !== undefined ? (video_url || null) : old.video_url,
         detail            ?? old.detail,
+        movie_status !== undefined ? normalizeMovieStatus(movie_status) : old.movie_status,
+        screening_expires_at !== undefined ? (screening_expires_at || null) : old.screening_expires_at,
         req.params.id,
       ]
     );
